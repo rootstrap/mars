@@ -4,7 +4,7 @@ require_relative "../runnable"
 
 module Mars
   module Workflows
-    module Sequential < Runnable
+    class Sequential < Runnable
       def initialize(name, steps:)
         @name = name
         @steps = steps
