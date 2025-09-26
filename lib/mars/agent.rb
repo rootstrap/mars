@@ -2,7 +2,7 @@
 
 module Mars
   class Agent < Runnable
-    def initialize(name:, tools: [], schema: nil, options:)
+    def initialize(name:, options:, tools: [], schema: nil)
       @name = name
       @tools = Array(tools)
       @schema = schema
