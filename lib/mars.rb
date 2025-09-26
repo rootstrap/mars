@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
-require_relative "mars/version"
+require "zeitwerk"
+
+loader = Zeitwerk::Loader.for_gem
+loader.setup
 
 module Mars
   class Error < StandardError; end
-  # Your code goes here...
 end
