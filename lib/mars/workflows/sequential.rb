@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "../runnable"
-
 module Mars
   module Workflows
     class Sequential < Runnable
