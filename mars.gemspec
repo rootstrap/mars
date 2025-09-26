@@ -3,22 +3,23 @@
 require_relative "lib/mars/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "mars"
+  spec.name = "mars_rb"
   spec.version = Mars::VERSION
-  spec.authors = ["Santiago Bartesaghi"]
-  spec.email = ["sbartesaghi@hotmail.com"]
+  spec.authors = ["Santiago Bartesaghi", "Andres Garcia", "Ignacio Perez", "Santiago Diaz"]
+  spec.email = ["sbartesaghi@hotmail.com", "andres@rootstrap.com", "ignacio.perez@rootstrap.com",
+                "santiago.diaz@rootstrap.com"]
 
-  spec.summary = "Write a short summary, because RubyGems requires one."
-  spec.description = "Write a longer description or delete this line."
+  spec.summary = "Multi-Agent Ruby SDK - A framework for building multi-agent solutions in pure Ruby"
+  spec.description = "MARS (Multi-Agent Ruby SDK) provides a comprehensive framework for developers to implement" \
+                     "multi-agent solutions using pure Ruby. It offers a simple API for orchestrating multiple agents."
   spec.homepage = "https://github.com/rootstrap/mars"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1.0"
 
-  spec.metadata["allowed_push_host"] = "Set to your gem server 'https://example.com'"
-
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/rootstrap/mars"
   spec.metadata["changelog_uri"] = "https://github.com/rootstrap/mars/releases"
+  spec.metadata["rubygems_mfa_required"] = "true"
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
