@@ -2,7 +2,9 @@
 
 module Mars
   class Agent < Runnable
-    def initialize(name:, options:, tools: [], schema: nil)
+    include MermaidRenderable
+
+    def initialize(name:, options: {}, tools: [], schema: nil)
       @name = name
       @tools = Array(tools)
       @schema = schema
@@ -11,6 +13,14 @@ module Mars
 
     def run(input)
       chat.ask(input)
+    end
+
+    def to_mermaid
+      "#{sanitized_name}[\"#{name}\"]"
+    end
+
+    def can_end_workflow?
+      true
     end
 
     private
