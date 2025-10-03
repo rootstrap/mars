@@ -2,7 +2,7 @@
 
 module Mars
   class Agent < Runnable
-    include MermaidRenderable
+    attr_reader :name
 
     def initialize(name:, options: {}, tools: [], schema: nil)
       @name = name
@@ -15,17 +15,9 @@ module Mars
       chat.ask(input)
     end
 
-    def to_mermaid
-      "#{sanitized_name}[\"#{name}\"]"
-    end
-
-    def can_end_workflow?
-      true
-    end
-
     private
 
-    attr_reader :name, :tools, :schema, :options
+    attr_reader :tools, :schema, :options
 
     def chat
       @chat ||= RubyLLM::Chat.new(**options).with_tools(tools).with_schema(schema)

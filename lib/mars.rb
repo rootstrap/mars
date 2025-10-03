@@ -8,3 +8,5 @@ loader.setup
 module Mars
   class Error < StandardError; end
 end
+
+Mars::Rendering::Mermaid.include_extensions

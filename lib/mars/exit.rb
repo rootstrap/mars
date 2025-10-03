@@ -2,7 +2,7 @@
 
 module Mars
   class Exit < Runnable
-    include MermaidRenderable
+    attr_reader :name
 
     def initialize(name: "Exit")
       @name = name
@@ -10,10 +10,6 @@ module Mars
 
     def run(input)
       input
-    end
-
-    def to_mermaid
-      "exit((#{name}))"
     end
   end
 end
