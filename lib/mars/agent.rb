@@ -2,7 +2,9 @@
 
 module Mars
   class Agent < Runnable
-    def initialize(name:, options:, tools: [], schema: nil)
+    attr_reader :name
+
+    def initialize(name:, options: {}, tools: [], schema: nil)
       @name = name
       @tools = Array(tools)
       @schema = schema
@@ -15,7 +17,7 @@ module Mars
 
     private
 
-    attr_reader :name, :tools, :schema, :options
+    attr_reader :tools, :schema, :options
 
     def chat
       @chat ||= RubyLLM::Chat.new(**options).with_tools(tools).with_schema(schema)
