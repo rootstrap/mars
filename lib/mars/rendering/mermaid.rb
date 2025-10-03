@@ -8,6 +8,8 @@ module Mars
         Mars::Exit.include(Exit)
         Mars::Gate.include(Gate)
         Mars::Workflows::Sequential.include(SequentialWorkflow)
+        Mars::Workflows::Parallel.include(ParallelWorkflow)
+        Mars::Aggregator.include(Aggregator)
       end
 
       def self.render(obj, options = {})
