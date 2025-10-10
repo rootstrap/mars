@@ -3,6 +3,8 @@
 module Mars
   module Workflows
     class Sequential < Runnable
+      attr_reader :name
+
       def initialize(name, steps:)
         @name = name
         @steps = steps
@@ -15,6 +17,10 @@ module Mars
 
         input
       end
+
+      private
+
+      attr_reader :steps
     end
   end
 end

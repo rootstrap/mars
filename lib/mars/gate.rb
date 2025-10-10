@@ -2,22 +2,22 @@
 
 module Mars
   class Gate < Runnable
+    attr_reader :name
+
     def initialize(name:, condition:, branches:)
       @name = name
       @condition = condition
-      @branches = branches
+      @branches = Hash.new(Exit.new).merge(branches)
     end
 
     def run(input)
       result = condition.call(input)
-
-      raise "Invalid condition result: #{result}" unless branches.key?(result)
 
       branches[result].run(input)
     end
 
     private
 
-    attr_reader :name, :condition, :branches
+    attr_reader :condition, :branches
   end
 end
