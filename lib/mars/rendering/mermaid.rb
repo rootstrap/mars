@@ -9,6 +9,18 @@ module Mars
         Mars::Gate.include(Gate)
         Mars::Workflows::Sequential.include(SequentialWorkflow)
       end
+
+      def self.render(obj, options = {})
+        direction = options.fetch(:direction, "LR")
+
+        <<~MERMAID
+          ```mermaid
+          flowchart #{direction}
+          In(("In")) -->
+          #{obj.to_mermaid}
+          ```
+        MERMAID
+      end
     end
   end
 end
