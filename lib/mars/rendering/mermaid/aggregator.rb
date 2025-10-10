@@ -7,8 +7,8 @@ module Mars
         include Base
 
         # TODO
-        def to_mermaid
-          "#{sanitized_name}[\"#{name}\"]"
+        def to_mermaid(from = 'In(("In")) -->', to = 'Out(("Out"))')
+          ["#{sanitized_name}[\"#{name}\"]"]
         end
 
         def can_end_workflow?

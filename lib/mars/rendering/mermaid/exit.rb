@@ -6,8 +6,8 @@ module Mars
       module Exit
         include Base
 
-        def to_mermaid
-          "exit((#{name}))"
+        def to_mermaid(from = 'In(("In")) -->', to = 'Out(("Out"))')
+          ["#{from} exit((#{name}))"]
         end
       end
     end

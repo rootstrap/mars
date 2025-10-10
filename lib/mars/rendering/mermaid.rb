@@ -18,8 +18,7 @@ module Mars
         <<~MERMAID
           ```mermaid
           flowchart #{direction}
-          In(("In")) -->
-          #{obj.to_mermaid}
+          #{obj.to_mermaid.flatten.join("\n")}
           ```
         MERMAID
       end

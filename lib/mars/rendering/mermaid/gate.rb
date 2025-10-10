@@ -6,21 +6,21 @@ module Mars
       module Gate
         include Base
 
-        def to_mermaid
+        def to_mermaid(from = 'In(("In")) -->', to = 'Out(("Out"))')
           gate_id = sanitized_name
           mermaid = ["#{gate_id}{\"#{name}\"}"]
 
           # Add edges for each branch
           branches.each do |condition_result, branch|
-            branch_mermaid = branch.to_mermaid
-            mermaid << "#{gate_id} -->|#{condition_result}| #{branch_mermaid}"
+            branch_mermaid = branch.to_mermaid("#{gate_id} -->|#{condition_result}|")
+            mermaid << branch_mermaid
           end
 
           # Add the default exit path
-          default_mermaid = branches.default.to_mermaid
-          mermaid << "#{gate_id} -->|default| #{default_mermaid}"
+          default_mermaid = branches[:default].to_mermaid("#{gate_id} -->|default|")
+          mermaid << default_mermaid
 
-          mermaid.join("\n")
+          mermaid
         end
       end
     end
