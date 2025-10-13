@@ -6,7 +6,7 @@ module Mars
       module Agent
         include Base
 
-        def to_mermaid
+        def to_mermaid(add_out: false)
           "#{sanitized_name}[\"#{name}\"]"
         end
 

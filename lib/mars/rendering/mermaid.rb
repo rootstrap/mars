@@ -19,7 +19,7 @@ module Mars
           ```mermaid
           flowchart #{direction}
           In(("In")) -->
-          #{obj.to_mermaid}
+          #{obj.to_mermaid(add_out: true)}
           ```
         MERMAID
       end
