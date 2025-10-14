@@ -10,18 +10,10 @@ llm2 = Mars::Agent.new(name: "LLM 2")
 
 llm3 = Mars::Agent.new(name: "LLM 3")
 
-llm4 = Mars::Agent.new(name: "LLM 4")
-
 # Create the success workflow (LLM 2 -> LLM 3)
-success_workflow = Mars::Workflows::Parallel.new(
+success_workflow = Mars::Workflows::Sequential.new(
   "Success workflow",
   steps: [llm2, llm3]
-)
-
-# Create the success workflow (LLM 2 -> LLM 3 -> LLM 4)
-success_workflow2 = Mars::Workflows::Sequential.new(
-  "Success workflow 2",
-  steps: [success_workflow, llm4]
 )
 
 # Create the gate that decides between exit or continue
@@ -29,7 +21,7 @@ gate = Mars::Gate.new(
   name: "Gate",
   condition: ->(input) { input[:result] },
   branches: {
-    success: success_workflow2
+    success: success_workflow
   }
 )
 
