@@ -13,7 +13,7 @@ module Mars
           mermaid = steps.map(&:to_mermaid)
 
           # If this parallel workflow ends the flow, connect all steps to Out
-          if add_out && steps.all?(&:can_end_workflow?)
+          if add_out
             steps.each do |step|
               Array(step.last_node_id).each do |last_id|
                 mermaid << "#{last_id} --> Out((\"Out\"))"

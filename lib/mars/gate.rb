@@ -7,13 +7,14 @@ module Mars
     def initialize(name:, condition:, branches:)
       @name = name
       @condition = condition
-      @branches = Hash.new(Exit.new).merge(branches)
+      @branches = branches
     end
 
     def run(input)
       result = condition.call(input)
 
-      branches[result].run(input)
+      # If branch exists, run it; otherwise just return input (exit)
+      branches[result]&.run(input) || input
     end
 
     private

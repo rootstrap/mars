@@ -47,7 +47,7 @@ module Mars
         def next_node(step, index, add_out:)
           if index < steps.length - 1
             steps[index + 1].first_node_id
-          elsif add_out && step.can_end_workflow?
+          elsif add_out
             "Out((\"Out\"))"
           end
         end
