@@ -9,10 +9,15 @@ LLM_4 --> LLM_2
 LLM_4 --> LLM_3
 LLM_2["LLM 2"]
 LLM_3["LLM 3"]
+Parallel_workflow_Parallel_workflow_Aggregator_32["Parallel workflow Aggregator"]
+LLM_2 --> Parallel_workflow_Parallel_workflow_Aggregator_32
+LLM_3 --> Parallel_workflow_Parallel_workflow_Aggregator_32
 LLM_5["LLM 5"]
-LLM_2 --> Out(("Out"))
-LLM_3 --> Out(("Out"))
-LLM_5 --> Out(("Out"))
+Parallel_workflow_2_Parallel_workflow_2_Aggregator_16["Parallel workflow 2 Aggregator"]
+Parallel_workflow_Parallel_workflow_Aggregator_32 --> Parallel_workflow_2_Parallel_workflow_2_Aggregator_16
+LLM_5 --> Parallel_workflow_2_Parallel_workflow_2_Aggregator_16
+Parallel_workflow_2_Parallel_workflow_2_Aggregator_16 --> Out(("Out"))
+Parallel_workflow_Parallel_workflow_Aggregator_32 --> Out(("Out"))
 Gate -->|success| LLM_4
 Gate -->|success| LLM_5
 Gate -->|warning| LLM_4

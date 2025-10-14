@@ -28,7 +28,7 @@ sequential_workflow = Mars::Workflows::Sequential.new(
 
 # Create a parallel workflow (Sequential workflow x LLM 5)
 parallel_workflow2 = Mars::Workflows::Parallel.new(
-  "Parallel workflow",
+  "Parallel workflow 2",
   steps: [sequential_workflow, llm5]
 )
 

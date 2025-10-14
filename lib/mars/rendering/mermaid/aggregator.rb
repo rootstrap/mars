@@ -6,13 +6,8 @@ module Mars
       module Aggregator
         include Base
 
-        # TODO
-        def to_mermaid
-          raise NotImplementedError
-        end
-
-        def can_end_workflow?
-          true
+        def to_mermaid(add_out: false)
+          "#{sanitized_name}[\"#{name}\"]"
         end
       end
     end
