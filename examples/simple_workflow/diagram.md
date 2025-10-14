@@ -9,6 +9,5 @@ LLM_2 --> LLM_3
 LLM_3["LLM 3"]
 LLM_3 --> Out(("Out"))
 Gate -->|success| LLM_2
-exit((Exit))
-Gate -->|default| exit
+Gate -->|default| Out(("Out"))
 ```
