@@ -32,6 +32,6 @@ main_workflow = Mars::Workflows::Sequential.new(
 )
 
 # Generate and save the diagram
-diagram = Mars::Rendering::Mermaid.render(main_workflow)
+diagram = Mars::Rendering::Mermaid.new(main_workflow).render
 File.write("examples/simple_workflow/diagram.md", diagram)
 puts "Simple workflow diagram saved to: examples/simple_workflow/diagram.md"

@@ -7,7 +7,7 @@ module Mars
     def initialize(name:, condition:, branches:)
       @name = name
       @condition = condition
-      @branches = Hash.new(Exit.new).merge(branches)
+      @branches = branches
     end
 
     def run(input)
