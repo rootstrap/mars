@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "async"
+
 module Mars
   module Workflows
     class Parallel < Runnable
@@ -12,11 +14,17 @@ module Mars
       end
 
       def run(input)
-        inputs = @steps.map do |step|
-          step.run(input)
-        end
+        results = Async do |workflow|
+          tasks = @steps.map do |step|
+            workflow.async do
+              step.run(input)
+            end
+          end
 
-        aggregator.run(inputs)
+          tasks.map(&:wait)
+        end.result
+
+        aggregator.run(results)
       end
 
       private
