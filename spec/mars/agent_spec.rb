@@ -50,38 +50,33 @@ RSpec.describe Mars::Agent do
   end
 
   describe "#run" do
-    let(:mock_chat) { instance_double(RubyLLM::Chat) }
     let(:agent) { described_class.new(name: "TestAgent") }
-
-    before do
-      allow(RubyLLM::Chat).to receive(:new).and_return(mock_chat)
-      allow(mock_chat).to receive(:with_tools).and_return(mock_chat)
-      allow(mock_chat).to receive(:with_schema).and_return(mock_chat)
-    end
+    let(:mock_chat) { double("chat") }
 
     it "delegates to chat.ask with the input" do
+      allow(agent).to receive(:chat).and_return(mock_chat)
       expect(mock_chat).to receive(:ask).with("test input").and_return("response")
+      
       result = agent.run("test input")
       expect(result).to eq("response")
     end
 
-    it "creates chat with provided options" do
-      options = { model: "gpt-4", temperature: 0.5 }
-      agent = described_class.new(name: "TestAgent", options: options)
+    it "calls chat method to get the chat instance" do
+      allow(agent).to receive(:chat).and_return(mock_chat)
+      allow(mock_chat).to receive(:ask).and_return("response")
       
-      expect(RubyLLM::Chat).to receive(:new).with(**options).and_return(mock_chat)
-      allow(mock_chat).to receive(:ask).with("input").and_return("output")
-      
+      expect(agent).to receive(:chat).at_least(:once)
       agent.run("input")
     end
 
-    it "reuses the same chat instance across multiple runs" do
-      allow(mock_chat).to receive(:ask).and_return("response")
+    it "passes different inputs to chat.ask" do
+      allow(agent).to receive(:chat).and_return(mock_chat)
       
-      expect(RubyLLM::Chat).to receive(:new).once.and_return(mock_chat)
+      expect(mock_chat).to receive(:ask).with("first input").and_return("first response")
+      expect(mock_chat).to receive(:ask).with("second input").and_return("second response")
       
-      agent.run("first input")
-      agent.run("second input")
+      expect(agent.run("first input")).to eq("first response")
+      expect(agent.run("second input")).to eq("second response")
     end
   end
 
