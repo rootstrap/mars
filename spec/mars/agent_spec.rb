@@ -14,13 +14,15 @@ RSpec.describe Mars::Agent do
     end
 
     it "accepts tools parameter as an array" do
-      tools = [double("tool1"), double("tool2")]
+      tool1 = instance_double("Tool1")
+      tool2 = instance_double("Tool2")
+      tools = [tool1, tool2]
       agent = described_class.new(name: "TestAgent", tools: tools)
       expect(agent.name).to eq("TestAgent")
     end
 
     it "accepts a single tool and converts it to an array" do
-      tool = double("tool")
+      tool = instance_double("Tool")
       agent = described_class.new(name: "TestAgent", tools: tool)
       expect(agent.name).to eq("TestAgent")
     end
@@ -32,10 +34,11 @@ RSpec.describe Mars::Agent do
     end
 
     it "accepts all parameters together" do
+      tool = instance_double("Tool")
       agent = described_class.new(
         name: "CompleteAgent",
         options: { model: "gpt-4" },
-        tools: [double("tool")],
+        tools: [tool],
         schema: { type: "object" }
       )
       expect(agent.name).to eq("CompleteAgent")
@@ -51,32 +54,27 @@ RSpec.describe Mars::Agent do
 
   describe "#run" do
     let(:agent) { described_class.new(name: "TestAgent") }
-    let(:mock_chat) { double("chat") }
+    let(:mock_chat) { instance_double("Chat") }
 
     it "delegates to chat.ask with the input" do
       allow(agent).to receive(:chat).and_return(mock_chat)
-      expect(mock_chat).to receive(:ask).with("test input").and_return("response")
+      allow(mock_chat).to receive(:ask).with("test input").and_return("response")
 
       result = agent.run("test input")
+
       expect(result).to eq("response")
-    end
-
-    it "calls chat method to get the chat instance" do
-      allow(agent).to receive(:chat).and_return(mock_chat)
-      allow(mock_chat).to receive(:ask).and_return("response")
-
-      expect(agent).to receive(:chat).at_least(:once)
-      agent.run("input")
+      expect(mock_chat).to have_received(:ask).with("test input")
     end
 
     it "passes different inputs to chat.ask" do
       allow(agent).to receive(:chat).and_return(mock_chat)
+      allow(mock_chat).to receive(:ask).and_return("response")
 
-      expect(mock_chat).to receive(:ask).with("first input").and_return("first response")
-      expect(mock_chat).to receive(:ask).with("second input").and_return("second response")
+      agent.run("first input")
+      agent.run("second input")
 
-      expect(agent.run("first input")).to eq("first response")
-      expect(agent.run("second input")).to eq("second response")
+      expect(mock_chat).to have_received(:ask).with("first input")
+      expect(mock_chat).to have_received(:ask).with("second input")
     end
   end
 

@@ -25,7 +25,7 @@ RSpec.describe Mars::Aggregator do
 
     context "when called without a block" do
       it "joins inputs with newlines" do
-        inputs = ["first", "second", "third"]
+        inputs = %w[first second third]
         result = aggregator.run(inputs)
         expect(result).to eq("first\nsecond\nthird")
       end
@@ -54,7 +54,7 @@ RSpec.describe Mars::Aggregator do
       end
 
       it "ignores the inputs when block is given" do
-        inputs = ["first", "second"]
+        inputs = %w[first second]
         result = aggregator.run(inputs) { "custom aggregation" }
         expect(result).to eq("custom aggregation")
       end

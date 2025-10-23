@@ -1,0 +1,9 @@
+{
+  "agentCanUpdateSnapshot": true,
+  "terminals": [
+    {
+      "name": "Show env",
+      "command": "env"
+    }
+  ]
+}
