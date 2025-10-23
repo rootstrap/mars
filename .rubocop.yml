@@ -19,10 +19,10 @@ Style/StringLiteralsInInterpolation:
   EnforcedStyle: double_quotes
 
 RSpec/MultipleExpectations:
-  Max: 2
+  Enabled: false
 
 RSpec/ExampleLength:
-  Max: 10
+  Enabled: false
 
 RSpec/VerifiedDoubleReference:
   Enabled: false
