@@ -56,7 +56,7 @@ RSpec.describe Mars::Agent do
     it "delegates to chat.ask with the input" do
       allow(agent).to receive(:chat).and_return(mock_chat)
       expect(mock_chat).to receive(:ask).with("test input").and_return("response")
-      
+
       result = agent.run("test input")
       expect(result).to eq("response")
     end
@@ -64,17 +64,17 @@ RSpec.describe Mars::Agent do
     it "calls chat method to get the chat instance" do
       allow(agent).to receive(:chat).and_return(mock_chat)
       allow(mock_chat).to receive(:ask).and_return("response")
-      
+
       expect(agent).to receive(:chat).at_least(:once)
       agent.run("input")
     end
 
     it "passes different inputs to chat.ask" do
       allow(agent).to receive(:chat).and_return(mock_chat)
-      
+
       expect(mock_chat).to receive(:ask).with("first input").and_return("first response")
       expect(mock_chat).to receive(:ask).with("second input").and_return("second response")
-      
+
       expect(agent.run("first input")).to eq("first response")
       expect(agent.run("second input")).to eq("second response")
     end

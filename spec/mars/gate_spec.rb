@@ -110,7 +110,7 @@ RSpec.describe Mars::Gate do
           end
         end
       end
-      
+
       let(:low_branch) { instance_double(Mars::Runnable) }
       let(:medium_branch) { instance_double(Mars::Runnable) }
       let(:high_branch) { instance_double(Mars::Runnable) }
