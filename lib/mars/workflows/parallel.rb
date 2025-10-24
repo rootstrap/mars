@@ -14,15 +14,20 @@ module Mars
       end
 
       def run(input)
+        errors = []
         results = Async do |workflow|
           tasks = @steps.map do |step|
             workflow.async do
               step.run(input)
+            rescue StandardError => e
+              errors << { error: e, step_name: step.name }
             end
           end
 
           tasks.map(&:wait)
         end.result
+
+        raise AggregateError, errors if errors.any?
 
         aggregator.run(results)
       end

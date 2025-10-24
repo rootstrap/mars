@@ -2,16 +2,15 @@
 
 module Mars
   class Aggregator < Runnable
-    attr_reader :name
+    attr_reader :name, :operation
 
-    def initialize(name = "Aggregator")
+    def initialize(name = "Aggregator", operation: nil)
       @name = name
+      @operation = operation || ->(inputs) { inputs.join("\n") }
     end
 
     def run(inputs)
-      return yield if block_given?
-
-      inputs.join("\n")
+      operation.call(inputs)
     end
   end
 end

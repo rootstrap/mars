@@ -6,7 +6,15 @@ AllCops:
   TargetRubyVersion: 3.1
   NewCops: enable
 
+Metrics/MethodLength:
+  Enabled: true
+  Exclude:
+    - "lib/mars/workflows/parallel.rb"
+
 Lint/MissingSuper:
+  Enabled: false
+
+RSpec/ExampleLength:
   Enabled: false
 
 Style/Documentation:

@@ -10,10 +10,13 @@ llm2 = Mars::Agent.new(name: "LLM 2")
 
 llm3 = Mars::Agent.new(name: "LLM 3")
 
+aggregator = Mars::Aggregator.new("Aggregator", operation: lambda(&:sum))
+
 # Create the parallel workflow (LLM 1, LLM 2, LLM 3)
 parallel_workflow = Mars::Workflows::Parallel.new(
   "Parallel workflow",
-  steps: [llm1, llm2, llm3]
+  steps: [llm1, llm2, llm3],
+  aggregator: aggregator
 )
 
 # Generate and save the diagram
