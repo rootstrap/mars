@@ -8,7 +8,7 @@ module Mars
       def initialize(name, steps:, aggregator: nil)
         @name = name
         @steps = steps
-        @aggregator = aggregator || Aggregator.new
+        @aggregator = aggregator || Aggregator.new("#{name} Aggregator")
       end
 
       def run(input)

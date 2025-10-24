@@ -17,6 +17,6 @@ parallel_workflow = Mars::Workflows::Parallel.new(
 )
 
 # Generate and save the diagram
-diagram = Mars::Rendering::Mermaid.render(parallel_workflow)
+diagram = Mars::Rendering::Mermaid.new(parallel_workflow).render
 File.write("examples/parallel_workflow/diagram.md", diagram)
 puts "Parallel workflow diagram saved to: examples/parallel_workflow/diagram.md"

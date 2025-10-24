@@ -9,4 +9,4 @@ module Mars
   class Error < StandardError; end
 end
 
-Mars::Rendering::Mermaid.include_extensions
+Mars::Rendering::Graph.include_extensions
