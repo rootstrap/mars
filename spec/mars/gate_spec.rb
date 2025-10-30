@@ -54,13 +54,13 @@ RSpec.describe Mars::Gate do
       end
     end
 
-    context "with default exit behavior" do
+    context "with missing branch" do
       let(:condition) { ->(input) { input > 5 ? "high" : "low" } }
       let(:high_branch) { instance_spy(Mars::Runnable) }
       let(:branches) { { "high" => high_branch } }
       let(:gate) { described_class.new(name: "TestGate", condition: condition, branches: branches) }
 
-      it "uses default Exit node for undefined branches" do
+      it "executes defined branch when condition matches" do
         allow(high_branch).to receive(:run).with(10).and_return("high result")
 
         result = gate.run(10)
@@ -69,11 +69,9 @@ RSpec.describe Mars::Gate do
         expect(high_branch).to have_received(:run).with(10)
       end
 
-      it "returns input unchanged when branch is not defined" do
+      it "raises an error when branch is not defined" do
         # For input 3, condition returns "low" which is not in branches
-        # Should use default Exit node which returns input unchanged
-        result = gate.run(3)
-        expect(result).to eq(3)
+        expect { gate.run(3) }.to raise_error(NoMethodError)
       end
     end
 
@@ -121,19 +119,6 @@ RSpec.describe Mars::Gate do
 
         expect(result).to eq("high result")
         expect(high_branch).to have_received(:run).with(100)
-      end
-    end
-
-    context "with nested runnable execution" do
-      let(:condition) { ->(input) { input[:type] } }
-      let(:exit_node) { Mars::Exit.new(name: "TestExit") }
-      let(:branches) { { "passthrough" => exit_node } }
-      let(:gate) { described_class.new(name: "TestGate", condition: condition, branches: branches) }
-
-      it "passes input through Exit node" do
-        input = { type: "passthrough", data: "test" }
-        result = gate.run(input)
-        expect(result).to eq(input)
       end
     end
   end
