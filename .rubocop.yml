@@ -18,10 +18,10 @@ Style/StringLiterals:
 Style/StringLiteralsInInterpolation:
   EnforcedStyle: double_quotes
 
-RSpec/MultipleExpectations:
+RSpec/ExampleLength:
   Enabled: false
 
-RSpec/ExampleLength:
+RSpec/MultipleExpectations:
   Enabled: false
 
 RSpec/VerifiedDoubleReference:

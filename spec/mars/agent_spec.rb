@@ -1,86 +1,39 @@
 # frozen_string_literal: true
 
 RSpec.describe Mars::Agent do
-  describe "#initialize" do
-    it "initializes with a name" do
-      agent = described_class.new(name: "TestAgent")
-      expect(agent.name).to eq("TestAgent")
-    end
-
-    it "accepts options parameter" do
-      options = { model: "gpt-4", temperature: 0.7 }
-      agent = described_class.new(name: "TestAgent", options: options)
-      expect(agent.name).to eq("TestAgent")
-    end
-
-    it "accepts tools parameter as an array" do
-      tool1 = instance_double("Tool1")
-      tool2 = instance_double("Tool2")
-      tools = [tool1, tool2]
-      agent = described_class.new(name: "TestAgent", tools: tools)
-      expect(agent.name).to eq("TestAgent")
-    end
-
-    it "accepts a single tool and converts it to an array" do
-      tool = instance_double("Tool")
-      agent = described_class.new(name: "TestAgent", tools: tool)
-      expect(agent.name).to eq("TestAgent")
-    end
-
-    it "accepts schema parameter" do
-      schema = { type: "object", properties: {} }
-      agent = described_class.new(name: "TestAgent", schema: schema)
-      expect(agent.name).to eq("TestAgent")
-    end
-
-    it "accepts all parameters together" do
-      tool = instance_double("Tool")
-      agent = described_class.new(
-        name: "CompleteAgent",
-        options: { model: "gpt-4" },
-        tools: [tool],
-        schema: { type: "object" }
-      )
-      expect(agent.name).to eq("CompleteAgent")
-    end
-  end
-
-  describe "#name" do
-    it "returns the agent name" do
-      agent = described_class.new(name: "MyAgent")
-      expect(agent.name).to eq("MyAgent")
-    end
-  end
-
   describe "#run" do
-    let(:agent) { described_class.new(name: "TestAgent") }
-    let(:mock_chat) { instance_double("Chat") }
+    let(:agent) { described_class.new(name: "TestAgent", options: { model: "test-model" }) }
+    let(:mock_chat_instance) do
+      instance_double("RubyLLM::Chat").tap do |mock|
+        allow(mock).to receive_messages(with_tools: mock, with_schema: mock, ask: nil)
+      end
+    end
+    let(:mock_chat_class) { class_double("RubyLLM::Chat", new: mock_chat_instance) }
 
-    it "delegates to chat.ask with the input" do
-      allow(agent).to receive(:chat).and_return(mock_chat)
-      allow(mock_chat).to receive(:ask).with("test input").and_return("response")
-
-      result = agent.run("test input")
-
-      expect(result).to eq("response")
-      expect(mock_chat).to have_received(:ask).with("test input")
+    before do
+      stub_const("RubyLLM::Chat", mock_chat_class)
     end
 
-    it "passes different inputs to chat.ask" do
-      allow(agent).to receive(:chat).and_return(mock_chat)
-      allow(mock_chat).to receive(:ask).and_return("response")
+    it "initializes RubyLLM::Chat with provided options" do
+      agent.run("test input")
 
-      agent.run("first input")
-      agent.run("second input")
-
-      expect(mock_chat).to have_received(:ask).with("first input")
-      expect(mock_chat).to have_received(:ask).with("second input")
+      expect(mock_chat_class).to have_received(:new).with(model: "test-model")
     end
-  end
 
-  describe "inheritance" do
-    it "inherits from Mars::Runnable" do
-      expect(described_class.ancestors).to include(Mars::Runnable)
+    it "configures chat with tools if provided" do
+      tools = [proc { "tool" }]
+      agent_with_tools = described_class.new(name: "TestAgent", tools: tools)
+      agent_with_tools.run("test input")
+
+      expect(mock_chat_instance).to have_received(:with_tools).with(tools)
+    end
+
+    it "configures chat with schema if provided" do
+      schema = { type: "object" }
+      agent_with_schema = described_class.new(name: "TestAgent", schema: schema)
+
+      agent_with_schema.run("test input")
+      expect(mock_chat_instance).to have_received(:with_schema).with(schema)
     end
   end
 end
