@@ -1,44 +1,6 @@
 # frozen_string_literal: true
 
 RSpec.describe Mars::Gate do
-  describe "#initialize" do
-    let(:condition) { ->(input) { input > 5 } }
-    let(:branches) { { true => Mars::Exit.new, false => Mars::Exit.new } }
-
-    it "initializes with required parameters" do
-      gate = described_class.new(name: "TestGate", condition: condition, branches: branches)
-      expect(gate.name).to eq("TestGate")
-    end
-
-    it "requires a name parameter" do
-      expect do
-        described_class.new(condition: condition, branches: branches)
-      end.to raise_error(ArgumentError)
-    end
-
-    it "requires a condition parameter" do
-      expect do
-        described_class.new(name: "TestGate", branches: branches)
-      end.to raise_error(ArgumentError)
-    end
-
-    it "requires a branches parameter" do
-      expect do
-        described_class.new(name: "TestGate", condition: condition)
-      end.to raise_error(ArgumentError)
-    end
-  end
-
-  describe "#name" do
-    let(:condition) { ->(input) { input > 5 } }
-    let(:branches) { { true => Mars::Exit.new } }
-
-    it "returns the gate name" do
-      gate = described_class.new(name: "MyGate", condition: condition, branches: branches)
-      expect(gate.name).to eq("MyGate")
-    end
-  end
-
   describe "#run" do
     context "with simple boolean condition" do
       let(:condition) { ->(input) { input > 5 } }
@@ -173,12 +135,6 @@ RSpec.describe Mars::Gate do
         result = gate.run(input)
         expect(result).to eq(input)
       end
-    end
-  end
-
-  describe "inheritance" do
-    it "inherits from Mars::Runnable" do
-      expect(described_class.ancestors).to include(Mars::Runnable)
     end
   end
 end

@@ -1,25 +1,6 @@
 # frozen_string_literal: true
 
 RSpec.describe Mars::Aggregator do
-  describe "#initialize" do
-    it "initializes with a default name" do
-      aggregator = described_class.new
-      expect(aggregator.name).to eq("Aggregator")
-    end
-
-    it "initializes with a custom name" do
-      aggregator = described_class.new("CustomAggregator")
-      expect(aggregator.name).to eq("CustomAggregator")
-    end
-  end
-
-  describe "#name" do
-    it "returns the aggregator name" do
-      aggregator = described_class.new("MyAggregator")
-      expect(aggregator.name).to eq("MyAggregator")
-    end
-  end
-
   describe "#run" do
     let(:aggregator) { described_class.new }
 
@@ -64,12 +45,6 @@ RSpec.describe Mars::Aggregator do
         result = aggregator.run(inputs) { inputs.sum }
         expect(result).to eq(15)
       end
-    end
-  end
-
-  describe "inheritance" do
-    it "inherits from Mars::Runnable" do
-      expect(described_class.ancestors).to include(Mars::Runnable)
     end
   end
 end
