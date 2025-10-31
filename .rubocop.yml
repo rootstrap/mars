@@ -9,6 +9,14 @@ AllCops:
 Lint/MissingSuper:
   Enabled: false
 
+Metrics/MethodLength:
+  Enabled: true
+  Exclude:
+  - "lib/mars/workflows/parallel.rb"
+
+RSpec/ExampleLength:
+  Enabled: false
+
 Style/Documentation:
   Enabled: false
 
