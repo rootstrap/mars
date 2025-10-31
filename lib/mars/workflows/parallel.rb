@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "async"
-
 module Mars
   module Workflows
     class Parallel < Runnable
