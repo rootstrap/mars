@@ -32,13 +32,9 @@ class Weather < RubyLLM::Tool
 
   def execute(latitude:, longitude:)
     url = "https://api.open-meteo.com/v1/forecast?latitude=#{latitude}&longitude=#{longitude}&current=temperature_2m,wind_speed_10m"
-
-    puts "Tool called with URL: #{url}"
     response = Net::HTTP.get_response(URI(url))
-    data = JSON.parse(response.body)
-    puts "Response: #{data}"
-    data
-  rescue => e
+    JSON.parse(response.body)
+  rescue StandardError => e
     { error: e.message }
   end
 end
@@ -48,7 +44,8 @@ weather_tool = Weather.new
 # Create the LLMs
 llm1 = Mars::Agent.new(
   name: "LLM 1", options: { model: "gpt-4o" },
-  instructions: "You are a helpful assistant that can answer questions. When asked about a country, only answer with its name."
+  instructions: "You are a helpful assistant that can answer questions.
+                 When asked about a country, only answer with its name."
 )
 
 llm2 = Mars::Agent.new(name: "LLM 2", options: { model: "gpt-4o" },
