@@ -317,8 +317,6 @@ The gem is available as open source under the terms of the [MIT License](https:/
 
 ## Support
 
-- 📖 [Documentation](https://github.com/rootstrap/mars)
-- 💬 [Discussions](https://github.com/rootstrap/mars/discussions)
 - 🐛 [Issue Tracker](https://github.com/rootstrap/mars/issues)
 
 ## Related Projects
