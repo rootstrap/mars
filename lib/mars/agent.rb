@@ -13,7 +13,9 @@ module Mars
     end
 
     def run(input)
-      chat.ask(input).content
+      processed_input = before_run(input)
+      response = chat.ask(processed_input).content
+      after_run(response)
     end
 
     private
@@ -25,6 +27,14 @@ module Mars
                              .with_instructions(instructions)
                              .with_tools(*tools)
                              .with_schema(schema)
+    end
+
+    def before_run(input)
+      input
+    end
+
+    def after_run(response)
+      response
     end
   end
 end
