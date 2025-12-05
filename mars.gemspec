@@ -36,7 +36,7 @@ Gem::Specification.new do |spec|
 
   # Uncomment to register a new dependency of your gem
   spec.add_dependency "async", "~> 2.34"
-  spec.add_dependency "ruby_llm", "~> 1.0"
+  spec.add_dependency "ruby_llm", "~> 1.9"
   spec.add_dependency "zeitwerk", "~> 2.7"
 
   # For more information and examples about making a new gem, check out our

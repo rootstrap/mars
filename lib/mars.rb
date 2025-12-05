@@ -3,6 +3,7 @@
 require "zeitwerk"
 require "async"
 require "ruby_llm"
+require "ruby_llm/schema"
 
 loader = Zeitwerk::Loader.for_gem
 loader.setup
