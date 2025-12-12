@@ -5,7 +5,9 @@ module Mars
     class Parallel < Runnable
       attr_reader :name
 
-      def initialize(name, steps:, aggregator: nil)
+      def initialize(name, steps:, aggregator: nil, **kwargs)
+        super(**kwargs)
+
         @name = name
         @steps = steps
         @aggregator = aggregator || Aggregator.new("#{name} Aggregator")

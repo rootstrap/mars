@@ -5,7 +5,9 @@ module Mars
     class Sequential < Runnable
       attr_reader :name
 
-      def initialize(name, steps:)
+      def initialize(name, steps:, **kwargs)
+        super(**kwargs)
+
         @name = name
         @steps = steps
       end
