@@ -4,7 +4,9 @@ module Mars
   class Agent < Runnable
     attr_reader :name
 
-    def initialize(name:, options: {}, tools: [], schema: nil, instructions: nil)
+    def initialize(name:, options: {}, tools: [], schema: nil, instructions: nil, **kwargs)
+      super(**kwargs)
+
       @name = name
       @tools = Array(tools)
       @schema = schema

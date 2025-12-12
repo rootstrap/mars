@@ -2,6 +2,12 @@
 
 module Mars
   class Runnable
+    attr_accessor :state
+
+    def initialize(state: {})
+      @state = state
+    end
+
     def run(input)
       raise NotImplementedError
     end

@@ -4,7 +4,9 @@ module Mars
   class Aggregator < Runnable
     attr_reader :name, :operation
 
-    def initialize(name = "Aggregator", operation: nil)
+    def initialize(name = "Aggregator", operation: nil, **kwargs)
+      super(**kwargs)
+
       @name = name
       @operation = operation || ->(inputs) { inputs.join("\n") }
     end
