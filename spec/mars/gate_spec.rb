@@ -69,9 +69,10 @@ RSpec.describe Mars::Gate do
         expect(high_branch).to have_received(:run).with(10)
       end
 
-      it "raises an error when branch is not defined" do
+      it "returns the input when branch is not defined" do
         # For input 3, condition returns "low" which is not in branches
-        expect { gate.run(3) }.to raise_error(NoMethodError)
+        result = gate.run(3)
+        expect(result).to eq(3)
       end
     end
 
