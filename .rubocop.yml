@@ -14,8 +14,10 @@ Metrics/MethodLength:
   Exclude:
   - "lib/mars/workflows/parallel.rb"
 
-RSpec/ExampleLength:
-  Enabled: false
+Metrics/ParameterLists:
+  Enabled: true
+  Exclude:
+  - "lib/mars/agent.rb"
 
 Style/Documentation:
   Enabled: false

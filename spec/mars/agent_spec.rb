@@ -2,12 +2,16 @@
 
 RSpec.describe Mars::Agent do
   describe "#run" do
+    subject(:run_agent) { agent.run("input text") }
+
     let(:agent) { described_class.new(name: "TestAgent", options: { model: "test-model" }) }
     let(:mock_chat_instance) do
       instance_double("RubyLLM::Chat").tap do |mock|
-        allow(mock).to receive_messages(with_tools: mock, with_schema: mock, ask: nil)
+        allow(mock).to receive_messages(with_tools: mock, with_schema: mock, with_instructions: mock,
+                                        ask: mock_chat_response)
       end
     end
+    let(:mock_chat_response) { instance_double("RubyLLM::Message", content: "response text") }
     let(:mock_chat_class) { class_double("RubyLLM::Chat", new: mock_chat_instance) }
 
     before do
@@ -15,25 +19,31 @@ RSpec.describe Mars::Agent do
     end
 
     it "initializes RubyLLM::Chat with provided options" do
-      agent.run("test input")
+      run_agent
 
       expect(mock_chat_class).to have_received(:new).with(model: "test-model")
     end
 
-    it "configures chat with tools if provided" do
-      tools = [proc { "tool" }]
-      agent_with_tools = described_class.new(name: "TestAgent", tools: tools)
-      agent_with_tools.run("test input")
+    context "when tools are provided" do
+      let(:tools) { [proc { "tool1" }, proc { "tool2" }] }
+      let(:agent) { described_class.new(name: "TestAgent", tools: tools) }
 
-      expect(mock_chat_instance).to have_received(:with_tools).with(tools)
+      it "configures chat with tools" do
+        run_agent
+
+        expect(mock_chat_instance).to have_received(:with_tools).with(*tools)
+      end
     end
 
-    it "configures chat with schema if provided" do
-      schema = { type: "object" }
-      agent_with_schema = described_class.new(name: "TestAgent", schema: schema)
+    context "when schema is provided" do
+      let(:schema) { { type: "object" } }
+      let(:agent) { described_class.new(name: "TestAgent", schema: schema) }
 
-      agent_with_schema.run("test input")
-      expect(mock_chat_instance).to have_received(:with_schema).with(schema)
+      it "configures chat with schema" do
+        run_agent
+
+        expect(mock_chat_instance).to have_received(:with_schema).with(schema)
+      end
     end
   end
 end
