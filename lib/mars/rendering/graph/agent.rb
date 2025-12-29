@@ -12,6 +12,10 @@ module Mars
 
           [node_id]
         end
+
+        def name
+          self.class.name
+        end
       end
     end
   end

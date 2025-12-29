@@ -2,14 +2,14 @@
 flowchart LR
 in((In))
 out((Out))
-llm_1[LLM 1]
+agent1[Agent1]
 gate{Gate}
-llm_2[LLM 2]
-llm_3[LLM 3]
-in --> llm_1
-llm_1 --> gate
-gate -->|success| llm_2
+agent2[Agent2]
+agent3[Agent3]
+in --> agent1
+agent1 --> gate
+gate -->|success| agent2
 gate -->|default| out
-llm_2 --> llm_3
-llm_3 --> out
+agent2 --> agent3
+agent3 --> out
 ```

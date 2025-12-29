@@ -47,10 +47,20 @@ Here's a simple example to get you started:
 ```ruby
 require 'mars'
 
+# Define agents
+class Agent1 < Mars::Agent
+end
+
+class Agent2 < Mars::Agent
+end
+
+class Agent3 < Mars::Agent
+end
+
 # Create agents
-agent1 = Mars::Agent.new(name: "Agent 1")
-agent2 = Mars::Agent.new(name: "Agent 2")
-agent3 = Mars::Agent.new(name: "Agent 3")
+agent1 = Agent1.new
+agent2 = Agent2.new
+agent3 = Agent3.new
 
 # Create a sequential workflow
 workflow = Mars::Workflows::Sequential.new(
@@ -69,9 +79,13 @@ result = workflow.run("Your input here")
 Agents are the basic building blocks of MARS. They represent individual units of work:
 
 ```ruby
-agent = Mars::Agent.new(
-  name: "My Agent",
-  instructions: "You are a helpful assistant",
+class CustomAgent < Mars::Agent
+  def system_prompt
+    "You are a helpful assistant"
+  end
+end
+
+agent = CustomAgent.new(
   options: { model: "gpt-4o" }
 )
 ```
@@ -110,7 +124,7 @@ Create conditional branching in your workflows:
 
 ```ruby
 gate = Mars::Gate.new(
-  name: "Decision Gate",
+  "Decision Gate",
   condition: ->(input) { input[:score] > 0.5 ? :success : :failure },
   branches: {
     success: success_workflow,
