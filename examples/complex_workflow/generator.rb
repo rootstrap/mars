@@ -3,16 +3,28 @@
 
 require_relative "../../lib/mars"
 
+# Define LLMs
+class Agent1 < Mars::Agent
+end
+
+class Agent2 < Mars::Agent
+end
+
+class Agent3 < Mars::Agent
+end
+
+class Agent4 < Mars::Agent
+end
+
+class Agent5 < Mars::Agent
+end
+
 # Create the LLMs
-llm1 = Mars::Agent.new(name: "LLM 1")
-
-llm2 = Mars::Agent.new(name: "LLM 2")
-
-llm3 = Mars::Agent.new(name: "LLM 3")
-
-llm4 = Mars::Agent.new(name: "LLM 4")
-
-llm5 = Mars::Agent.new(name: "LLM 5")
+llm1 = Agent1.new
+llm2 = Agent2.new
+llm3 = Agent3.new
+llm4 = Agent4.new
+llm5 = Agent5.new
 
 # Create a parallel workflow (LLM 2 x LLM 3)
 parallel_workflow = Mars::Workflows::Parallel.new(
@@ -34,7 +46,6 @@ parallel_workflow2 = Mars::Workflows::Parallel.new(
 
 # Create the gate that decides between exit or continue
 gate = Mars::Gate.new(
-  name: "Gate",
   condition: ->(input) { input[:result] },
   branches: {
     success: parallel_workflow2,

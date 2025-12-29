@@ -19,8 +19,6 @@ class SportsSchema < RubyLLM::Schema
   end
 end
 
-sports_schema = SportsSchema.new
-
 # Define weather tool
 class Weather < RubyLLM::Tool
   description "Gets current weather for a location"
@@ -39,26 +37,48 @@ class Weather < RubyLLM::Tool
   end
 end
 
-weather_tool = Weather.new
+# Define LLMs
+class Agent1 < Mars::Agent
+  def system_prompt
+    "You are a helpful assistant that can answer questions.
+     When asked about a country, only answer with its name."
+  end
+end
+
+class Agent2 < Mars::Agent
+  def system_prompt
+    "You are a helpful assistant that can answer questions and help with tasks.
+     Return information about the typical food of the country."
+  end
+end
+
+class Agent3 < Mars::Agent
+  def system_prompt
+    "You are a helpful assistant that can answer questions and help with tasks.
+     Return information about the popular sports of the country."
+  end
+
+  def schema
+    SportsSchema.new
+  end
+end
+
+class Agent4 < Mars::Agent
+  def system_prompt
+    "You are a helpful assistant that can answer questions and help with tasks.
+     Return the current weather of the country's capital."
+  end
+
+  def tools
+    [Weather.new]
+  end
+end
 
 # Create the LLMs
-llm1 = Mars::Agent.new(
-  name: "LLM 1", options: { model: "gpt-4o" },
-  instructions: "You are a helpful assistant that can answer questions.
-                 When asked about a country, only answer with its name."
-)
-
-llm2 = Mars::Agent.new(name: "LLM 2", options: { model: "gpt-4o" },
-                       instructions: "You are a helpful assistant that can answer questions and help with tasks.
-                       Return information about the typical food of the country.")
-
-llm3 = Mars::Agent.new(name: "LLM 3", options: { model: "gpt-4o" }, schema: sports_schema,
-                       instructions: "You are a helpful assistant that can answer questions and help with tasks.
-                       Return information about the popular sports of the country.")
-
-llm4 = Mars::Agent.new(name: "LLM 4", options: { model: "gpt-4o" }, tools: [weather_tool],
-                       instructions: "You are a helpful assistant that can answer questions and help with tasks.
-                       Return the current weather of the country's capital.")
+llm1 = Agent1.new(options: { model: "gpt-4o" })
+llm2 = Agent2.new(options: { model: "gpt-4o" })
+llm3 = Agent3.new(options: { model: "gpt-4o" })
+llm4 = Agent4.new(options: { model: "gpt-4o" })
 
 parallel_workflow = Mars::Workflows::Parallel.new(
   "Parallel workflow",
@@ -66,7 +86,6 @@ parallel_workflow = Mars::Workflows::Parallel.new(
 )
 
 gate = Mars::Gate.new(
-  name: "Gate",
   condition: ->(input) { input.split.length < 10 ? :success : :error },
   branches: {
     success: parallel_workflow
@@ -84,4 +103,4 @@ File.write("examples/complex_llm_workflow/diagram.md", diagram)
 puts "Complex workflow diagram saved to: examples/complex_llm_workflow/diagram.md"
 
 # Run the workflow
-puts sequential_workflow.run("Which is the largest country in South America?")
+puts sequential_workflow.run("Which is the largest country in Europe?")

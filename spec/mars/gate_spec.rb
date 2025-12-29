@@ -7,7 +7,7 @@ RSpec.describe Mars::Gate do
       let(:true_branch) { instance_spy(Mars::Runnable) }
       let(:false_branch) { instance_spy(Mars::Runnable) }
       let(:branches) { { true => true_branch, false => false_branch } }
-      let(:gate) { described_class.new(name: "TestGate", condition: condition, branches: branches) }
+      let(:gate) { described_class.new("TestGate", condition: condition, branches: branches) }
 
       it "executes true branch when condition is true" do
         allow(true_branch).to receive(:run).with(10).and_return("true result")
@@ -33,7 +33,7 @@ RSpec.describe Mars::Gate do
       let(:long_branch) { instance_spy(Mars::Runnable) }
       let(:short_branch) { instance_spy(Mars::Runnable) }
       let(:branches) { { "long" => long_branch, "short" => short_branch } }
-      let(:gate) { described_class.new(name: "LengthGate", condition: condition, branches: branches) }
+      let(:gate) { described_class.new("LengthGate", condition: condition, branches: branches) }
 
       it "routes to correct branch based on string result" do
         allow(long_branch).to receive(:run).with("longstring").and_return("long result")
@@ -58,7 +58,7 @@ RSpec.describe Mars::Gate do
       let(:condition) { ->(input) { input > 5 ? "high" : "low" } }
       let(:high_branch) { instance_spy(Mars::Runnable) }
       let(:branches) { { "high" => high_branch } }
-      let(:gate) { described_class.new(name: "TestGate", condition: condition, branches: branches) }
+      let(:gate) { described_class.new("TestGate", condition: condition, branches: branches) }
 
       it "executes defined branch when condition matches" do
         allow(high_branch).to receive(:run).with(10).and_return("high result")
@@ -93,7 +93,7 @@ RSpec.describe Mars::Gate do
       let(:branches) { { "low" => low_branch, "medium" => medium_branch, "high" => high_branch } }
 
       it "routes to low branch" do
-        gate = described_class.new(name: "RangeGate", condition: condition, branches: branches)
+        gate = described_class.new("RangeGate", condition: condition, branches: branches)
         allow(low_branch).to receive(:run).with(5).and_return("low result")
 
         result = gate.run(5)
@@ -103,7 +103,7 @@ RSpec.describe Mars::Gate do
       end
 
       it "routes to medium branch" do
-        gate = described_class.new(name: "RangeGate", condition: condition, branches: branches)
+        gate = described_class.new("RangeGate", condition: condition, branches: branches)
         allow(medium_branch).to receive(:run).with(25).and_return("medium result")
 
         result = gate.run(25)
@@ -113,7 +113,7 @@ RSpec.describe Mars::Gate do
       end
 
       it "routes to high branch" do
-        gate = described_class.new(name: "RangeGate", condition: condition, branches: branches)
+        gate = described_class.new("RangeGate", condition: condition, branches: branches)
         allow(high_branch).to receive(:run).with(100).and_return("high result")
 
         result = gate.run(100)

@@ -2,28 +2,28 @@
 flowchart LR
 in((In))
 out((Out))
-llm_1[LLM 1]
+agent1[Agent1]
 gate{Gate}
 parallel_workflow_2_aggregator[Parallel workflow 2 Aggregator]
-llm_4[LLM 4]
+agent4[Agent4]
 parallel_workflow_aggregator[Parallel workflow Aggregator]
-llm_2[LLM 2]
-llm_3[LLM 3]
-llm_5[LLM 5]
-in --> llm_1
-llm_1 --> gate
-gate -->|success| llm_4
-gate -->|success| llm_5
-gate -->|warning| llm_4
-gate -->|error| llm_2
-gate -->|error| llm_3
+agent2[Agent2]
+agent3[Agent3]
+agent5[Agent5]
+in --> agent1
+agent1 --> gate
+gate -->|success| agent4
+gate -->|success| agent5
+gate -->|warning| agent4
+gate -->|error| agent2
+gate -->|error| agent3
 gate -->|default| out
-llm_4 --> llm_2
-llm_4 --> llm_3
-llm_2 --> parallel_workflow_aggregator
+agent4 --> agent2
+agent4 --> agent3
+agent2 --> parallel_workflow_aggregator
 parallel_workflow_aggregator --> parallel_workflow_2_aggregator
 parallel_workflow_aggregator --> out
-llm_3 --> parallel_workflow_aggregator
+agent3 --> parallel_workflow_aggregator
 parallel_workflow_2_aggregator --> out
-llm_5 --> parallel_workflow_2_aggregator
+agent5 --> parallel_workflow_2_aggregator
 ```

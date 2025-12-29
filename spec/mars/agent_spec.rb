@@ -4,7 +4,7 @@ RSpec.describe Mars::Agent do
   describe "#run" do
     subject(:run_agent) { agent.run("input text") }
 
-    let(:agent) { described_class.new(name: "TestAgent", options: { model: "test-model" }) }
+    let(:agent) { described_class.new(options: { model: "test-model" }) }
     let(:mock_chat_instance) do
       instance_double("RubyLLM::Chat").tap do |mock|
         allow(mock).to receive_messages(with_tools: mock, with_schema: mock, with_instructions: mock,
@@ -26,7 +26,15 @@ RSpec.describe Mars::Agent do
 
     context "when tools are provided" do
       let(:tools) { [proc { "tool1" }, proc { "tool2" }] }
-      let(:agent) { described_class.new(name: "TestAgent", tools: tools) }
+      let(:agent_class) do
+        Class.new(described_class) do
+          def tools
+            [proc { "tool1" }, proc { "tool2" }]
+          end
+        end
+      end
+
+      let(:agent) { agent_class.new }
 
       it "configures chat with tools" do
         run_agent
@@ -36,13 +44,20 @@ RSpec.describe Mars::Agent do
     end
 
     context "when schema is provided" do
-      let(:schema) { { type: "object" } }
-      let(:agent) { described_class.new(name: "TestAgent", schema: schema) }
+      let(:agent_class) do
+        Class.new(described_class) do
+          def schema
+            { type: "object" }
+          end
+        end
+      end
+
+      let(:agent) { agent_class.new }
 
       it "configures chat with schema" do
         run_agent
 
-        expect(mock_chat_instance).to have_received(:with_schema).with(schema)
+        expect(mock_chat_instance).to have_received(:with_schema).with({ type: "object" })
       end
     end
   end

@@ -2,16 +2,10 @@
 
 module Mars
   class Agent < Runnable
-    attr_reader :name
-
-    def initialize(name:, options: {}, tools: [], schema: nil, instructions: nil, **kwargs)
+    def initialize(options: {}, **kwargs)
       super(**kwargs)
 
-      @name = name
-      @tools = Array(tools)
-      @schema = schema
       @options = options
-      @instructions = instructions
     end
 
     def run(input)
@@ -22,11 +16,11 @@ module Mars
 
     private
 
-    attr_reader :tools, :schema, :options, :instructions
+    attr_reader :options
 
     def chat
       @chat ||= RubyLLM::Chat.new(**options)
-                             .with_instructions(instructions)
+                             .with_instructions(system_prompt)
                              .with_tools(*tools)
                              .with_schema(schema)
     end
@@ -37,6 +31,18 @@ module Mars
 
     def after_run(response)
       response
+    end
+
+    def system_prompt
+      nil
+    end
+
+    def tools
+      []
+    end
+
+    def schema
+      nil
     end
   end
 end

@@ -4,7 +4,7 @@ module Mars
   class Gate < Runnable
     attr_reader :name
 
-    def initialize(name:, condition:, branches:, **kwargs)
+    def initialize(name = "Gate", condition:, branches:, **kwargs)
       super(**kwargs)
 
       @name = name

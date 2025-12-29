@@ -3,12 +3,20 @@
 
 require_relative "../../lib/mars"
 
+# Define the LLMs
+class Agent1 < Mars::Agent
+end
+
+class Agent2 < Mars::Agent
+end
+
+class Agent3 < Mars::Agent
+end
+
 # Create the LLMs
-llm1 = Mars::Agent.new(name: "LLM 1")
-
-llm2 = Mars::Agent.new(name: "LLM 2")
-
-llm3 = Mars::Agent.new(name: "LLM 3")
+llm1 = Agent1.new
+llm2 = Agent2.new
+llm3 = Agent3.new
 
 # Create the success workflow (LLM 2 -> LLM 3)
 success_workflow = Mars::Workflows::Sequential.new(
@@ -18,7 +26,6 @@ success_workflow = Mars::Workflows::Sequential.new(
 
 # Create the gate that decides between exit or continue
 gate = Mars::Gate.new(
-  name: "Gate",
   condition: ->(input) { input[:result] },
   branches: {
     success: success_workflow

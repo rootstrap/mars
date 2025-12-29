@@ -3,14 +3,14 @@ flowchart LR
 in((In))
 out((Out))
 aggregator[Aggregator]
-llm_1[LLM 1]
-llm_2[LLM 2]
-llm_3[LLM 3]
-in --> llm_1
-in --> llm_2
-in --> llm_3
-llm_1 --> aggregator
+agent1[Agent1]
+agent2[Agent2]
+agent3[Agent3]
+in --> agent1
+in --> agent2
+in --> agent3
+agent1 --> aggregator
 aggregator --> out
-llm_2 --> aggregator
-llm_3 --> aggregator
+agent2 --> aggregator
+agent3 --> aggregator
 ```
