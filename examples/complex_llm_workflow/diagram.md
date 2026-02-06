@@ -10,10 +10,10 @@ agent3[Agent3]
 agent4[Agent4]
 in --> agent1
 agent1 --> gate
-gate -->|success| agent2
-gate -->|success| agent3
-gate -->|success| agent4
-gate -->|default| out
+gate -->|failure| out
+gate --> agent2
+gate --> agent3
+gate --> agent4
 agent2 --> parallel_workflow_aggregator
 parallel_workflow_aggregator --> out
 agent3 --> parallel_workflow_aggregator
