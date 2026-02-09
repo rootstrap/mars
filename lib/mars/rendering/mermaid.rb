@@ -3,11 +3,11 @@
 module Mars
   module Rendering
     class Mermaid
-      attr_reader :obj, :graph, :nodes
+      attr_reader :obj, :graph, :nodes, :subgraphs
 
       def initialize(obj)
         @obj = obj
-        @graph, @nodes = obj.build_graph
+        @graph, @nodes, @subgraphs = obj.build_graph
       end
 
       def render(options = {})
@@ -24,6 +24,10 @@ module Mars
 
       def graph_mermaid
         nodes_mermaid = nodes.keys.map { |node_id| "#{node_id}#{shape(node_id)}" }
+        subgraphs_mermaid = subgraphs.values.map do |subgraph|
+          node_names = subgraph.nodes
+          "subgraph #{subgraph.id}[\"#{subgraph.name}\"]\n  #{node_names.join("\n  ")}\nend"
+        end
         edges_mermaid = []
 
         graph.each do |from, tos|
@@ -33,7 +37,7 @@ module Mars
           end
         end
 
-        nodes_mermaid + edges_mermaid
+        nodes_mermaid + subgraphs_mermaid + edges_mermaid
       end
 
       def shape(node_id)

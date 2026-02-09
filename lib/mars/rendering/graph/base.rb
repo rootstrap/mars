@@ -14,7 +14,7 @@ module Mars
             builder.add_edge(sink_node, "out")
           end
 
-          [builder.adjacency, builder.nodes]
+          [builder.adjacency, builder.nodes, builder.subgraphs]
         end
 
         def node_id

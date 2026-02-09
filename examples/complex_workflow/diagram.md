@@ -10,6 +10,28 @@ agent2[Agent2]
 agent3[Agent3]
 parallel_workflow_2_aggregator[Parallel workflow 2 Aggregator]
 agent5[Agent5]
+subgraph main_pipeline["Main Pipeline"]
+  agent1
+  gate
+  parallel_workflow_aggregator
+  parallel_workflow_2
+  parallel_workflow_2_aggregator
+end
+subgraph sequential_workflow["Sequential workflow"]
+  agent4
+  parallel_workflow
+  parallel_workflow_aggregator
+end
+subgraph parallel_workflow["Parallel workflow"]
+  agent2
+  agent3
+  parallel_workflow_aggregator
+end
+subgraph parallel_workflow_2["Parallel workflow 2"]
+  sequential_workflow
+  agent5
+  parallel_workflow_2_aggregator
+end
 in --> agent1
 agent1 --> gate
 gate -->|warning| agent4
