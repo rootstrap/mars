@@ -85,7 +85,6 @@ parallel_workflow = Mars::Workflows::Parallel.new(
   steps: [llm2, llm3, llm4]
 )
 
-
 error_workflow = Mars::Workflows::Sequential.new(
   "Error workflow",
   steps: []

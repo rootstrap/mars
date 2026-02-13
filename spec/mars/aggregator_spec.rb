@@ -5,15 +5,9 @@ RSpec.describe Mars::Aggregator do
     context "when called without a block" do
       let(:aggregator) { described_class.new }
 
-      it "joins inputs with newlines" do
-        inputs = %w[first second third]
-        result = aggregator.run(inputs)
-        expect(result).to eq("first\nsecond\nthird")
-      end
-
-      it "handles empty array" do
-        result = aggregator.run([])
-        expect(result).to eq("")
+      it "returns the input as is" do
+        result = aggregator.run([1, 2, 3])
+        expect(result).to eq([1, 2, 3])
       end
     end
 

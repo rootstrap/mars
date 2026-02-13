@@ -48,7 +48,6 @@ parallel_workflow2 = Mars::Workflows::Parallel.new(
 gate = Mars::Gate.new(
   condition: ->(input) { input[:result] },
   branches: {
-    success: parallel_workflow2,
     warning: sequential_workflow,
     error: parallel_workflow
   }
@@ -57,7 +56,7 @@ gate = Mars::Gate.new(
 # Create the main workflow: LLM 1 -> Gate
 main_workflow = Mars::Workflows::Sequential.new(
   "Main Pipeline",
-  steps: [llm1, gate]
+  steps: [llm1, gate, parallel_workflow2]
 )
 
 # Generate and save the diagram

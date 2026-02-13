@@ -14,9 +14,7 @@ module Mars
             parent_id = step.node_id
           end
 
-          if sink_nodes.empty?
-            builder.add_edge(parent_id, "out", value)
-          end
+          builder.add_edge(parent_id, "out", value) if sink_nodes.empty?
 
           sink_nodes.flatten
         end
