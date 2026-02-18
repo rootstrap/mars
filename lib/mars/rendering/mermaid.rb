@@ -31,7 +31,7 @@ module Mars
       end
 
       def subgraphs_mermaid
-        subgraphs.values.map do |subgraph|
+        subgraphs.values.reverse.map do |subgraph|
           node_names = subgraph.nodes
           "subgraph #{subgraph.id}[\"#{subgraph.name}\"]\n  #{node_names.join("\n  ")}\nend"
         end

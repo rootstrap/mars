@@ -12,8 +12,6 @@ module Mars
 
           build_steps_graph(builder, parent_id, value)
 
-          builder.add_node_to_subgraph(node_id, aggregator.node_id)
-
           [aggregator.node_id]
         end
 

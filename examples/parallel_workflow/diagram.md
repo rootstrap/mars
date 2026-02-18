@@ -7,7 +7,7 @@ agent1[Agent1]
 agent2[Agent2]
 agent3[Agent3]
 subgraph parallel_workflow["Parallel workflow"]
-agent1
+  agent1
   agent2
   agent3
 end
