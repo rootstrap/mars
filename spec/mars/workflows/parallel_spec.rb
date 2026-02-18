@@ -10,7 +10,6 @@ RSpec.describe Mars::Workflows::Parallel do
 
       def run(input)
         sleep 0.1
-        puts "add step: #{input}"
         input + @value
       end
     end
@@ -23,7 +22,6 @@ RSpec.describe Mars::Workflows::Parallel do
       end
 
       def run(input)
-        puts "multiply step: #{input}"
         input * @multiplier
       end
     end
@@ -39,7 +37,6 @@ RSpec.describe Mars::Workflows::Parallel do
       end
 
       def run(_input)
-        puts "error step: #{@name}"
         raise StandardError, @message
       end
     end

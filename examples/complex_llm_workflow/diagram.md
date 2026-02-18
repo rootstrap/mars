@@ -8,6 +8,17 @@ parallel_workflow_aggregator[Parallel workflow Aggregator]
 agent2[Agent2]
 agent3[Agent3]
 agent4[Agent4]
+subgraph parallel_workflow["Parallel workflow"]
+  agent2
+  agent3
+  agent4
+end
+subgraph sequential_workflow["Sequential workflow"]
+  agent1
+  gate
+  parallel_workflow
+  parallel_workflow_aggregator
+end
 in --> agent1
 agent1 --> gate
 gate -->|failure| out
