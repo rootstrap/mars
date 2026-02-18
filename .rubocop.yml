@@ -19,6 +19,11 @@ Metrics/ParameterLists:
   Exclude:
   - "lib/mars/agent.rb"
 
+Metrics/AbcSize:
+  Enabled: true
+  Exclude:
+  - "lib/mars/rendering/graph/parallel_workflow.rb"
+
 Style/Documentation:
   Enabled: false
 

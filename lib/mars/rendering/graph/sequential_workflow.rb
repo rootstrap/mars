@@ -7,9 +7,19 @@ module Mars
         include Base
 
         def to_graph(builder, parent_id: nil, value: nil)
-          sink_nodes = []
-
           builder.add_subgraph(node_id, name) if steps.any?
+
+          parent_id, value, sink_nodes = build_steps_graph(builder, parent_id, value)
+
+          builder.add_edge(parent_id, "out", value) if sink_nodes.empty?
+
+          sink_nodes.flatten
+        end
+
+        private
+
+        def build_steps_graph(builder, parent_id, value)
+          sink_nodes = []
 
           steps.each do |step|
             sink_nodes = step.to_graph(builder, parent_id: parent_id, value: value)
@@ -18,14 +28,10 @@ module Mars
 
             builder.add_node_to_subgraph(node_id, step.node_id)
 
-            sink_nodes.each do |sink_node|
-              builder.add_node_to_subgraph(node_id, sink_node)
-            end
+            sink_nodes.each { |sink_node| builder.add_node_to_subgraph(node_id, sink_node) }
           end
 
-          builder.add_edge(parent_id, "out", value) if sink_nodes.empty?
-
-          sink_nodes.flatten
+          [parent_id, value, sink_nodes]
         end
       end
     end

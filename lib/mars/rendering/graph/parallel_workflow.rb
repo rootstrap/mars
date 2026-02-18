@@ -10,6 +10,16 @@ module Mars
           builder.add_subgraph(node_id, name) if steps.any?
           builder.add_node(aggregator.node_id, aggregator.name, Node::STEP)
 
+          build_steps_graph(builder, parent_id, value)
+
+          builder.add_node_to_subgraph(node_id, aggregator.node_id)
+
+          [aggregator.node_id]
+        end
+
+        private
+
+        def build_steps_graph(builder, parent_id, value)
           steps.each do |step|
             sink_nodes = step.to_graph(builder, parent_id: parent_id, value: value)
 
@@ -19,10 +29,6 @@ module Mars
               aggregator.to_graph(builder, parent_id: sink_node)
             end
           end
-
-          builder.add_node_to_subgraph(node_id, aggregator.node_id)
-
-          [aggregator.node_id]
         end
       end
     end

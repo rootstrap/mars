@@ -23,21 +23,29 @@ module Mars
       end
 
       def graph_mermaid
-        nodes_mermaid = nodes.keys.map { |node_id| "#{node_id}#{shape(node_id)}" }
-        subgraphs_mermaid = subgraphs.values.map do |subgraph|
+        nodes_mermaid + subgraphs_mermaid + edges_mermaid
+      end
+
+      def nodes_mermaid
+        nodes.keys.map { |node_id| "#{node_id}#{shape(node_id)}" }
+      end
+
+      def subgraphs_mermaid
+        subgraphs.values.map do |subgraph|
           node_names = subgraph.nodes
           "subgraph #{subgraph.id}[\"#{subgraph.name}\"]\n  #{node_names.join("\n  ")}\nend"
         end
-        edges_mermaid = []
+      end
 
+      def edges_mermaid
+        edges = []
         graph.each do |from, tos|
           tos.each do |to|
             node_id, value = to
-            edges_mermaid << "#{from} -->#{edge_value(value)} #{node_id}"
+            edges << "#{from} -->#{edge_value(value)} #{node_id}"
           end
         end
-
-        nodes_mermaid + subgraphs_mermaid + edges_mermaid
+        edges
       end
 
       def shape(node_id)
