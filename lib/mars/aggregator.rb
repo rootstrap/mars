@@ -8,7 +8,7 @@ module Mars
       super(**kwargs)
 
       @name = name
-      @operation = operation || ->(inputs) { inputs.join("\n") }
+      @operation = operation || ->(inputs) { inputs }
     end
 
     def run(inputs)

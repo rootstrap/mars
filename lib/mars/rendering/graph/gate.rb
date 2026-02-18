@@ -14,8 +14,6 @@ module Mars
             branch.to_graph(builder, parent_id: node_id, value: condition_result)
           end
 
-          builder.add_edge(node_id, "out", "default")
-
           sink_nodes.flatten
         end
       end

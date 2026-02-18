@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe Mars::Workflows::Parallel do
+  let(:sum_aggregator) { Mars::Aggregator.new("Sum Aggregator", operation: lambda(&:sum)) }
   let(:add_step_class) do
     Class.new do
       def initialize(value)
@@ -45,7 +46,7 @@ RSpec.describe Mars::Workflows::Parallel do
   end
 
   describe "#run" do
-    it "executes steps in parallel" do
+    it "executes steps in parallel without an aggregator" do
       add_five = add_step_class.new(5)
       multiply_three = multiply_step_class.new(3)
       add_two = add_step_class.new(2)
@@ -53,16 +54,15 @@ RSpec.describe Mars::Workflows::Parallel do
       workflow = described_class.new("math_workflow", steps: [add_five, multiply_three, add_two])
 
       # 10 + 5 = 15, 10 * 3 = 30, 10 + 2 = 12
-      expect(workflow.run(10)).to eq("15\n30\n12")
+      expect(workflow.run(10)).to eq([15, 30, 12])
     end
 
     it "executes steps in parallel with a custom aggregator" do
       add_five = add_step_class.new(5)
       multiply_three = multiply_step_class.new(3)
       add_two = add_step_class.new(2)
-      aggregator = Mars::Aggregator.new("Custom Aggregator", operation: lambda(&:sum))
       workflow = described_class.new("math_workflow", steps: [add_five, multiply_three, add_two],
-                                                      aggregator: aggregator)
+                                                      aggregator: sum_aggregator)
 
       expect(workflow.run(10)).to eq(57)
     end
@@ -71,13 +71,13 @@ RSpec.describe Mars::Workflows::Parallel do
       multiply_step = multiply_step_class.new(7)
       workflow = described_class.new("single_step", steps: [multiply_step])
 
-      expect(workflow.run(6)).to eq("42")
+      expect(workflow.run(6)).to eq([42])
     end
 
-    it "returns input unchanged when no steps" do
+    it "returns empty array when no steps" do
       workflow = described_class.new("empty", steps: [])
 
-      expect(workflow.run(42)).to eq("")
+      expect(workflow.run(42)).to eq([])
     end
 
     it "propagates errors from steps" do

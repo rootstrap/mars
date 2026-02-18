@@ -85,16 +85,21 @@ parallel_workflow = Mars::Workflows::Parallel.new(
   steps: [llm2, llm3, llm4]
 )
 
+error_workflow = Mars::Workflows::Sequential.new(
+  "Error workflow",
+  steps: []
+)
+
 gate = Mars::Gate.new(
-  condition: ->(input) { input.split.length < 10 ? :success : :error },
+  condition: ->(input) { input.split.length < 10 ? :success : :failure },
   branches: {
-    success: parallel_workflow
+    failure: error_workflow
   }
 )
 
 sequential_workflow = Mars::Workflows::Sequential.new(
   "Sequential workflow",
-  steps: [llm1, gate]
+  steps: [llm1, gate, parallel_workflow]
 )
 
 # Generate and save the diagram

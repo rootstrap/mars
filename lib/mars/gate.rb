@@ -15,7 +15,7 @@ module Mars
     def run(input)
       result = condition.call(input)
 
-      branches[result]&.run(input) || input
+      branches[result] || input
     end
 
     private
