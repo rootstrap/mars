@@ -20,7 +20,7 @@ module Mars
             workflow.async do
               step.run(input)
             rescue StandardError => e
-              errors << { error: e, step_name: step.name }
+              errors << { error: e, step_name: step.class.name }
             end
           end
 
