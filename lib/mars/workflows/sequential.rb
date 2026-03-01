@@ -3,12 +3,9 @@
 module MARS
   module Workflows
     class Sequential < Runnable
-      attr_reader :name
-
       def initialize(name, steps:, **kwargs)
-        super(**kwargs)
+        super(name: name, **kwargs)
 
-        @name = name
         @steps = steps
       end
 

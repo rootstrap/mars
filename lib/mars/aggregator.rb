@@ -2,12 +2,11 @@
 
 module MARS
   class Aggregator < Runnable
-    attr_reader :name, :operation
+    attr_reader :operation
 
     def initialize(name = "Aggregator", operation: nil, **kwargs)
-      super(**kwargs)
+      super(name: name, **kwargs)
 
-      @name = name
       @operation = operation || ->(inputs) { inputs }
     end
 
