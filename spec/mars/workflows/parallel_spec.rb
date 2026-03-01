@@ -1,23 +1,23 @@
 # frozen_string_literal: true
 
 RSpec.describe MARS::Workflows::Parallel do
-  let(:sum_aggregator) { MARS::Aggregator.new("Sum Aggregator", operation: lambda(&:sum)) }
   let(:add_step_class) do
-    Class.new do
-      def initialize(value)
+    Class.new(MARS::Runnable) do
+      def initialize(value:, **kwargs)
+        super(**kwargs)
         @value = value
       end
 
       def run(input)
-        sleep 0.1
         input + @value
       end
     end
   end
 
   let(:multiply_step_class) do
-    Class.new do
-      def initialize(multiplier)
+    Class.new(MARS::Runnable) do
+      def initialize(multiplier:, **kwargs)
+        super(**kwargs)
         @multiplier = multiplier
       end
 
@@ -28,12 +28,10 @@ RSpec.describe MARS::Workflows::Parallel do
   end
 
   let(:error_step_class) do
-    Class.new do
-      attr_reader :name
-
-      def initialize(message, name)
+    Class.new(MARS::Runnable) do
+      def initialize(message:, **kwargs)
+        super(**kwargs)
         @message = message
-        @name = name
       end
 
       def run(_input)
@@ -43,44 +41,88 @@ RSpec.describe MARS::Workflows::Parallel do
   end
 
   describe "#run" do
-    it "executes steps in parallel without an aggregator" do
-      add_five = add_step_class.new(5)
-      multiply_three = multiply_step_class.new(3)
-      add_two = add_step_class.new(2)
+    it "executes steps in parallel and returns context with all outputs" do
+      add_five = add_step_class.new(value: 5, name: "add_five")
+      multiply_three = multiply_step_class.new(multiplier: 3, name: "multiply_three")
+      add_two = add_step_class.new(value: 2, name: "add_two")
 
-      workflow = described_class.new("math_workflow", steps: [add_five, multiply_three, add_two])
+      aggregator = MARS::Aggregator.new("sum", operation: ->(ctx) { ctx.values.sum })
+      workflow = described_class.new("math_workflow",
+                                     steps: [add_five, multiply_three, add_two],
+                                     aggregator: aggregator)
 
-      # 10 + 5 = 15, 10 * 3 = 30, 10 + 2 = 12
-      expect(workflow.run(10)).to eq([15, 30, 12])
+      # 10+5=15, 10*3=30, 10+2=12 → sum=57
+      result = workflow.run(10)
+      expect(result).to eq(57)
     end
 
-    it "executes steps in parallel with a custom aggregator" do
-      add_five = add_step_class.new(5)
-      multiply_three = multiply_step_class.new(3)
-      add_two = add_step_class.new(2)
-      workflow = described_class.new("math_workflow", steps: [add_five, multiply_three, add_two],
-                                                      aggregator: sum_aggregator)
+    it "records each step output in the merged context" do
+      add_five = add_step_class.new(value: 5, name: "add_five")
+      multiply_three = multiply_step_class.new(multiplier: 3, name: "multiply_three")
 
-      expect(workflow.run(10)).to eq(57)
+      aggregator = MARS::Aggregator.new("pass", operation: ->(outputs) { outputs })
+      workflow = described_class.new("math_workflow",
+                                     steps: [add_five, multiply_three],
+                                     aggregator: aggregator)
+
+      result = workflow.run(10)
+      expect(result).to eq({ add_five: 15, multiply_three: 30 })
     end
 
-    it "handles single step" do
-      multiply_step = multiply_step_class.new(7)
-      workflow = described_class.new("single_step", steps: [multiply_step])
+    it "each branch gets independent current_input" do
+      tracker = Class.new(MARS::Runnable) do
+        def run(input)
+          "saw:#{input}"
+        end
+      end
 
-      expect(workflow.run(6)).to eq([42])
+      step_a = tracker.new(name: "a")
+      step_b = tracker.new(name: "b")
+
+      aggregator = MARS::Aggregator.new("collect", operation: lambda(&:values))
+      workflow = described_class.new("independent", steps: [step_a, step_b], aggregator: aggregator)
+
+      result = workflow.run("original")
+      expect(result).to eq(["saw:original", "saw:original"])
     end
 
-    it "returns empty array when no steps" do
+    it "shares global_state across branches" do
+      writer = Class.new(MARS::Runnable) do
+        after_run do |ctx, _result, step|
+          ctx.global_state[step.name.to_sym] = true
+        end
+
+        def run(input)
+          input
+        end
+      end
+
+      step_a = writer.new(name: "a")
+      step_b = writer.new(name: "b")
+
+      aggregator = MARS::Aggregator.new("check", operation: ->(outputs) { outputs })
+      workflow = described_class.new("shared_state",
+                                     steps: [step_a, step_b],
+                                     aggregator: aggregator)
+
+      ctx = MARS::ExecutionContext.new(input: "x", global_state: {})
+      workflow.run(ctx)
+
+      expect(ctx.global_state[:a]).to be(true)
+      expect(ctx.global_state[:b]).to be(true)
+    end
+
+    it "returns empty result when no steps" do
       workflow = described_class.new("empty", steps: [])
 
-      expect(workflow.run(42)).to eq([])
+      result = workflow.run(42)
+      expect(result).to eq({})
     end
 
     it "propagates errors from steps" do
-      add_step = add_step_class.new(5)
-      error_step = error_step_class.new("Step failed", "error_step_one")
-      error_step_two = error_step_class.new("Step failed two", "error_step_two")
+      add_step = add_step_class.new(value: 5, name: "add")
+      error_step = error_step_class.new(message: "Step failed", name: "error_step_one")
+      error_step_two = error_step_class.new(message: "Step failed two", name: "error_step_two")
 
       workflow = described_class.new("error_workflow", steps: [add_step, error_step, error_step_two])
 

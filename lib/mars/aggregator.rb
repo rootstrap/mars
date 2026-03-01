@@ -11,7 +11,11 @@ module MARS
     end
 
     def run(inputs)
-      operation.call(inputs)
+      if inputs.is_a?(ExecutionContext)
+        operation.call(inputs.outputs)
+      else
+        operation.call(inputs)
+      end
     end
   end
 end

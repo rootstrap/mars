@@ -15,7 +15,7 @@ module MARS
     end
 
     def record(step_name, output)
-      @outputs[step_name] = output
+      @outputs[step_name.to_sym] = output
       @current_input = output
     end
 

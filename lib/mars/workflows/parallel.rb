@@ -11,27 +11,42 @@ module MARS
       end
 
       def run(input)
-        errors = []
-        results = Async do |workflow|
-          tasks = @steps.map do |step|
-            workflow.async do
-              step.run(input)
-            rescue StandardError => e
-              errors << { error: e, step_name: step.name }
-            end
-          end
+        context = input.is_a?(ExecutionContext) ? input : ExecutionContext.new(input: input)
 
-          tasks.map(&:wait)
-        end.result
+        errors = []
+        child_contexts = run_steps_async(context, errors)
 
         raise AggregateError, errors if errors.any?
 
-        aggregator.run(results)
+        context.merge(child_contexts)
+        aggregator.run(context)
       end
 
       private
 
       attr_reader :steps, :aggregator
+
+      def run_steps_async(context, errors)
+        Async do |workflow|
+          tasks = steps.map do |step|
+            workflow.async { run_step(context.fork, step, errors) }
+          end
+
+          tasks.map(&:wait)
+        end.result
+      end
+
+      def run_step(child, step, errors)
+        step.run_before_hooks(child)
+        step_input = step.formatter.format_input(child)
+        result = step.run(step_input)
+        formatted = step.formatter.format_output(result)
+        child.record(step.name, formatted)
+        step.run_after_hooks(child, formatted)
+        child
+      rescue StandardError => e
+        errors << { error: e, step_name: step.name }
+      end
     end
   end
 end
