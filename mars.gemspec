@@ -4,7 +4,7 @@ require_relative "lib/mars/version"
 
 Gem::Specification.new do |spec|
   spec.name = "mars_rb"
-  spec.version = Mars::VERSION
+  spec.version = MARS::VERSION
   spec.authors = ["Santiago Bartesaghi", "Andres Garcia", "Ignacio Perez", "Santiago Diaz"]
   spec.email = ["sbartesaghi@hotmail.com", "andres@rootstrap.com", "ignacio.perez@rootstrap.com",
                 "santiago.diaz@rootstrap.com"]

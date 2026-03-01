@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Mars
+module MARS
   class Runnable
     attr_accessor :state
 

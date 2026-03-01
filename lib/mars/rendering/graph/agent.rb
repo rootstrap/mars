@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Mars
+module MARS
   module Rendering
     module Graph
       module Agent

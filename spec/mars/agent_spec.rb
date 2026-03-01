@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Mars::Agent do
+RSpec.describe MARS::Agent do
   describe "#run" do
     subject(:run_agent) { agent.run("input text") }
 

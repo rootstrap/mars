@@ -38,21 +38,21 @@ class Weather < RubyLLM::Tool
 end
 
 # Define LLMs
-class Agent1 < Mars::Agent
+class Agent1 < MARS::Agent
   def system_prompt
     "You are a helpful assistant that can answer questions.
      When asked about a country, only answer with its name."
   end
 end
 
-class Agent2 < Mars::Agent
+class Agent2 < MARS::Agent
   def system_prompt
     "You are a helpful assistant that can answer questions and help with tasks.
      Return information about the typical food of the country."
   end
 end
 
-class Agent3 < Mars::Agent
+class Agent3 < MARS::Agent
   def system_prompt
     "You are a helpful assistant that can answer questions and help with tasks.
      Return information about the popular sports of the country."
@@ -63,7 +63,7 @@ class Agent3 < Mars::Agent
   end
 end
 
-class Agent4 < Mars::Agent
+class Agent4 < MARS::Agent
   def system_prompt
     "You are a helpful assistant that can answer questions and help with tasks.
      Return the current weather of the country's capital."
@@ -80,30 +80,30 @@ llm2 = Agent2.new(options: { model: "gpt-4o" })
 llm3 = Agent3.new(options: { model: "gpt-4o" })
 llm4 = Agent4.new(options: { model: "gpt-4o" })
 
-parallel_workflow = Mars::Workflows::Parallel.new(
+parallel_workflow = MARS::Workflows::Parallel.new(
   "Parallel workflow",
   steps: [llm2, llm3, llm4]
 )
 
-error_workflow = Mars::Workflows::Sequential.new(
+error_workflow = MARS::Workflows::Sequential.new(
   "Error workflow",
   steps: []
 )
 
-gate = Mars::Gate.new(
+gate = MARS::Gate.new(
   condition: ->(input) { input.split.length < 10 ? :success : :failure },
   branches: {
     failure: error_workflow
   }
 )
 
-sequential_workflow = Mars::Workflows::Sequential.new(
+sequential_workflow = MARS::Workflows::Sequential.new(
   "Sequential workflow",
   steps: [llm1, gate, parallel_workflow]
 )
 
 # Generate and save the diagram
-diagram = Mars::Rendering::Mermaid.new(sequential_workflow).render
+diagram = MARS::Rendering::Mermaid.new(sequential_workflow).render
 File.write("examples/complex_llm_workflow/diagram.md", diagram)
 puts "Complex workflow diagram saved to: examples/complex_llm_workflow/diagram.md"
 

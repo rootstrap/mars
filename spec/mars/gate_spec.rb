@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-RSpec.describe Mars::Gate do
+RSpec.describe MARS::Gate do
   describe "#run" do
     let(:gate) { described_class.new("TestGate", condition: condition, branches: branches) }
 
     context "with simple boolean condition" do
       let(:condition) { ->(input) { input > 5 } }
-      let(:false_branch) { instance_spy(Mars::Runnable) }
+      let(:false_branch) { instance_spy(MARS::Runnable) }
       let(:branches) { { false => false_branch } }
 
       it "returns the input when no branch matches" do
@@ -29,8 +29,8 @@ RSpec.describe Mars::Gate do
 
     context "with string-based condition" do
       let(:condition) { ->(input) { input.length > 5 ? "long" : "short" } }
-      let(:long_branch) { instance_spy(Mars::Runnable) }
-      let(:short_branch) { instance_spy(Mars::Runnable) }
+      let(:long_branch) { instance_spy(MARS::Runnable) }
+      let(:short_branch) { instance_spy(MARS::Runnable) }
       let(:branches) { { "long" => long_branch, "short" => short_branch } }
 
       it "routes to long branch for long strings" do
@@ -57,9 +57,9 @@ RSpec.describe Mars::Gate do
         end
       end
 
-      let(:low_branch) { instance_spy(Mars::Runnable) }
-      let(:medium_branch) { instance_spy(Mars::Runnable) }
-      let(:high_branch) { instance_spy(Mars::Runnable) }
+      let(:low_branch) { instance_spy(MARS::Runnable) }
+      let(:medium_branch) { instance_spy(MARS::Runnable) }
+      let(:high_branch) { instance_spy(MARS::Runnable) }
       let(:branches) { { "low" => low_branch, "medium" => medium_branch, "high" => high_branch } }
 
       it "routes to low branch" do

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-RSpec.describe Mars::Workflows::Parallel do
-  let(:sum_aggregator) { Mars::Aggregator.new("Sum Aggregator", operation: lambda(&:sum)) }
+RSpec.describe MARS::Workflows::Parallel do
+  let(:sum_aggregator) { MARS::Aggregator.new("Sum Aggregator", operation: lambda(&:sum)) }
   let(:add_step_class) do
     Class.new do
       def initialize(value)
@@ -85,16 +85,16 @@ RSpec.describe Mars::Workflows::Parallel do
       workflow = described_class.new("error_workflow", steps: [add_step, error_step, error_step_two])
 
       expect { workflow.run(10) }.to raise_error(
-        Mars::Workflows::AggregateError,
+        MARS::Workflows::AggregateError,
         "error_step_one: Step failed\nerror_step_two: Step failed two"
       )
     end
   end
 
   describe "inheritance" do
-    it "inherits from Mars::Runnable" do
+    it "inherits from MARS::Runnable" do
       workflow = described_class.new("test", steps: [])
-      expect(workflow).to be_a(Mars::Runnable)
+      expect(workflow).to be_a(MARS::Runnable)
     end
   end
 end

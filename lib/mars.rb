@@ -6,10 +6,11 @@ require "ruby_llm"
 require "ruby_llm/schema"
 
 loader = Zeitwerk::Loader.for_gem
+loader.inflector.inflect("mars" => "MARS")
 loader.setup
 
-module Mars
+module MARS
   class Error < StandardError; end
 end
 
-Mars::Rendering::Graph.include_extensions
+MARS::Rendering::Graph.include_extensions

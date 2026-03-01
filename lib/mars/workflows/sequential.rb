@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Mars
+module MARS
   module Workflows
     class Sequential < Runnable
       attr_reader :name

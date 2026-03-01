@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Mars::Workflows::Sequential do
+RSpec.describe MARS::Workflows::Sequential do
   let(:add_step_class) do
     Class.new do
       def initialize(value)
@@ -73,9 +73,9 @@ RSpec.describe Mars::Workflows::Sequential do
   end
 
   describe "inheritance" do
-    it "inherits from Mars::Runnable" do
+    it "inherits from MARS::Runnable" do
       workflow = described_class.new("test", steps: [])
-      expect(workflow).to be_a(Mars::Runnable)
+      expect(workflow).to be_a(MARS::Runnable)
     end
   end
 end
