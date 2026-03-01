@@ -4,13 +4,13 @@
 require_relative "../../lib/mars"
 
 # Define the LLMs
-class Agent1 < Mars::Agent
+class Agent1 < MARS::Agent
 end
 
-class Agent2 < Mars::Agent
+class Agent2 < MARS::Agent
 end
 
-class Agent3 < Mars::Agent
+class Agent3 < MARS::Agent
 end
 
 # Create the LLMs
@@ -19,13 +19,13 @@ llm2 = Agent2.new
 llm3 = Agent3.new
 
 # Create the success workflow (LLM 2 -> LLM 3)
-success_workflow = Mars::Workflows::Sequential.new(
+success_workflow = MARS::Workflows::Sequential.new(
   "Success workflow",
   steps: [llm2, llm3]
 )
 
 # Create the gate that decides between exit or continue
-gate = Mars::Gate.new(
+gate = MARS::Gate.new(
   condition: ->(input) { input[:result] },
   branches: {
     success: success_workflow
@@ -33,12 +33,12 @@ gate = Mars::Gate.new(
 )
 
 # Create the main workflow: LLM 1 -> Gate
-main_workflow = Mars::Workflows::Sequential.new(
+main_workflow = MARS::Workflows::Sequential.new(
   "Main Pipeline",
   steps: [llm1, gate]
 )
 
 # Generate and save the diagram
-diagram = Mars::Rendering::Mermaid.new(main_workflow).render
+diagram = MARS::Rendering::Mermaid.new(main_workflow).render
 File.write("examples/simple_workflow/diagram.md", diagram)
 puts "Simple workflow diagram saved to: examples/simple_workflow/diagram.md"

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-RSpec.describe Mars do
+RSpec.describe MARS do
   it "has a version number" do
-    expect(Mars::VERSION).not_to be_nil
+    expect(MARS::VERSION).not_to be_nil
   end
 end

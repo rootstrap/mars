@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Mars::Aggregator do
+RSpec.describe MARS::Aggregator do
   describe "#run" do
     context "when called without a block" do
       let(:aggregator) { described_class.new }

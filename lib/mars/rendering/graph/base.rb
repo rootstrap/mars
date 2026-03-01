@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-module Mars
+module MARS
   module Rendering
     module Graph
       module Base
-        def build_graph(builder = Mars::Rendering::Graph::Builder.new)
+        def build_graph(builder = MARS::Rendering::Graph::Builder.new)
           builder.add_node("in", "In", Node::INPUT)
           builder.add_node("out", "Out", Node::OUTPUT)
 

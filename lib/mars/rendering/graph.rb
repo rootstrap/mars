@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-module Mars
+module MARS
   module Rendering
     module Graph
       def self.include_extensions
-        Mars::Agent.include(Agent)
-        Mars::Gate.include(Gate)
-        Mars::Workflows::Sequential.include(SequentialWorkflow)
-        Mars::Workflows::Parallel.include(ParallelWorkflow)
-        Mars::Aggregator.include(Aggregator)
+        MARS::Agent.include(Agent)
+        MARS::Gate.include(Gate)
+        MARS::Workflows::Sequential.include(SequentialWorkflow)
+        MARS::Workflows::Parallel.include(ParallelWorkflow)
+        MARS::Aggregator.include(Aggregator)
       end
     end
   end

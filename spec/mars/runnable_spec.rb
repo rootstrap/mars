@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Mars::Runnable do
+RSpec.describe MARS::Runnable do
   describe "#run" do
     context "when called directly on the base class" do
       let(:runnable) { described_class.new }
@@ -12,7 +12,7 @@ RSpec.describe Mars::Runnable do
 
     context "when implemented in a subclass" do
       let(:test_runnable_class) do
-        Class.new(Mars::Runnable) do
+        Class.new(MARS::Runnable) do
           def run(input)
             "processed: #{input}"
           end
@@ -29,7 +29,7 @@ RSpec.describe Mars::Runnable do
 
     context "when subclass doesn't override run method" do
       let(:incomplete_runnable_class) do
-        Class.new(Mars::Runnable) do
+        Class.new(MARS::Runnable) do
           # Intentionally not overriding run method
         end
       end
