@@ -5,6 +5,9 @@ plugins:
 AllCops:
   TargetRubyVersion: 3.1
   NewCops: enable
+  Exclude:
+  - "examples/**/*"
+  - "vendor/**/*"
 
 Lint/MissingSuper:
   Enabled: false
