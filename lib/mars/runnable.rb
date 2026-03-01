@@ -15,8 +15,6 @@ module MARS
         name.split("::").last.gsub(/([a-z])([A-Z])/, '\1_\2').downcase
       end
 
-      attr_writer :step_name
-
       def formatter(klass = nil)
         klass ? @formatter_class = klass : @formatter_class
       end
