@@ -2,82 +2,120 @@
 
 RSpec.describe MARS::Gate do
   describe "#run" do
-    let(:gate) { described_class.new("TestGate", condition: condition, branches: branches) }
-
-    context "with simple boolean condition" do
-      let(:condition) { ->(input) { input > 5 } }
-      let(:false_branch) { instance_spy(MARS::Runnable) }
-      let(:branches) { { false => false_branch } }
-
-      it "returns the input when no branch matches" do
-        result = gate.run(10)
-        expect(result).to eq(10)
+    context "with constructor-based configuration" do
+      let(:short_step) do
+        Class.new(MARS::Runnable) do
+          def run(input)
+            "short: #{input}"
+          end
+        end.new
       end
 
-      it "returns the false branch when condition is false" do
-        result = gate.run(3)
-
-        expect(result).to eq(false_branch)
+      let(:long_step) do
+        Class.new(MARS::Runnable) do
+          def run(input)
+            "long: #{input}"
+          end
+        end.new
       end
 
-      it "does not run the false branch when condition is false" do
-        gate.run(3)
+      let(:gate) do
+        described_class.new(
+          "LengthGate",
+          condition: ->(input) { input.length > 5 ? :long : :short },
+          branches: { short: short_step, long: long_step }
+        )
+      end
 
-        expect(false_branch).not_to have_received(:run)
+      it "executes the matched branch directly" do
+        expect(gate.run("hi")).to eq("short: hi")
+      end
+
+      it "executes the other branch for different input" do
+        expect(gate.run("longstring")).to eq("long: longstring")
+      end
+
+      it "returns input when no branch matches" do
+        gate = described_class.new(
+          "NoMatch",
+          condition: ->(_input) { :unknown },
+          branches: { short: short_step }
+        )
+
+        expect(gate.run("hello")).to eq("hello")
       end
     end
 
-    context "with string-based condition" do
-      let(:condition) { ->(input) { input.length > 5 ? "long" : "short" } }
-      let(:long_branch) { instance_spy(MARS::Runnable) }
-      let(:short_branch) { instance_spy(MARS::Runnable) }
-      let(:branches) { { "long" => long_branch, "short" => short_branch } }
-
-      it "routes to long branch for long strings" do
-        result = gate.run("longstring")
-
-        expect(result).to eq(long_branch)
-      end
-
-      it "routes to short branch for short strings" do
-        result = gate.run("hi")
-
-        expect(result).to eq(short_branch)
-      end
-    end
-
-    context "with complex condition logic" do
-      let(:condition) do
-        lambda do |input|
-          case input
-          when 0..10 then "low"
-          when 11..50 then "medium"
-          else "high"
+    context "with class-level DSL" do
+      let(:short_step_class) do
+        Class.new(MARS::Runnable) do
+          def run(input)
+            "quick: #{input}"
           end
         end
       end
 
-      let(:low_branch) { instance_spy(MARS::Runnable) }
-      let(:medium_branch) { instance_spy(MARS::Runnable) }
-      let(:high_branch) { instance_spy(MARS::Runnable) }
-      let(:branches) { { "low" => low_branch, "medium" => medium_branch, "high" => high_branch } }
+      let(:long_step_class) do
+        Class.new(MARS::Runnable) do
+          def run(input)
+            "deep: #{input}"
+          end
+        end
+      end
+
+      it "uses condition and branch DSL" do
+        short_cls = short_step_class
+        long_cls = long_step_class
+
+        gate_class = Class.new(described_class) do
+          condition { |input| input.length < 5 ? :short : :long }
+          branch :short, short_cls
+          branch :long, long_cls
+        end
+
+        gate = gate_class.new("DSLGate")
+        expect(gate.run("hi")).to eq("quick: hi")
+        expect(gate.run("longstring")).to eq("deep: longstring")
+      end
+    end
+
+    context "with complex condition logic" do
+      let(:low_step) do
+        Class.new(MARS::Runnable) { def run(input) = "low:#{input}" }.new
+      end
+
+      let(:medium_step) do
+        Class.new(MARS::Runnable) { def run(input) = "med:#{input}" }.new
+      end
+
+      let(:high_step) do
+        Class.new(MARS::Runnable) { def run(input) = "high:#{input}" }.new
+      end
+
+      let(:gate) do
+        described_class.new(
+          "SeverityGate",
+          condition: lambda { |input|
+            case input
+            when 0..10 then :low
+            when 11..50 then :medium
+            else :high
+            end
+          },
+          branches: { low: low_step, medium: medium_step, high: high_step }
+        )
+      end
 
       it "routes to low branch" do
-        result = gate.run(5)
-
-        expect(result).to eq(low_branch)
+        expect(gate.run(5)).to eq("low:5")
       end
 
       it "routes to medium branch" do
-        result = gate.run(25)
-
-        expect(result).to eq(medium_branch)
+        expect(gate.run(25)).to eq("med:25")
       end
 
       it "routes to high branch" do
-        result = gate.run(100)
-
-        expect(result).to eq(high_branch)
+        expect(gate.run(100)).to eq("high:100")
       end
     end
   end
