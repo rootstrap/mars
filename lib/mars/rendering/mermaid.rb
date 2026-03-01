@@ -31,10 +31,8 @@ module MARS
       end
 
       def subgraphs_mermaid
-        subgraphs.values.reverse.map do |subgraph|
-          node_names = subgraph.nodes
-          "subgraph #{subgraph.id}[\"#{subgraph.name}\"]\n  #{node_names.join("\n  ")}\nend"
-        end
+        root_ids = subgraphs.keys - nested_subgraph_ids
+        root_ids.map { |id| render_subgraph(id) }
       end
 
       def edges_mermaid
@@ -65,6 +63,32 @@ module MARS
         return "" unless value
 
         "|#{value}|"
+      end
+
+      private
+
+      def nested_subgraph_ids
+        ids = []
+        subgraphs.each_value do |sg|
+          sg.nodes.each { |n| ids << n if subgraphs.key?(n) }
+        end
+        ids
+      end
+
+      def render_subgraph(id, indent = "")
+        sg = subgraphs[id]
+        lines = ["#{indent}subgraph #{sg.id}[\"#{sg.name}\"]"]
+        sg.nodes.each { |node_id| lines << render_subgraph_node(node_id, indent) }
+        lines << "#{indent}end"
+        lines.join("\n")
+      end
+
+      def render_subgraph_node(node_id, indent)
+        if subgraphs.key?(node_id)
+          render_subgraph(node_id, "#{indent}  ")
+        else
+          "#{indent}  #{node_id}"
+        end
       end
     end
   end

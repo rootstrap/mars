@@ -37,48 +37,52 @@ class Weather < RubyLLM::Tool
   end
 end
 
-# Define LLMs
-class Agent1 < MARS::Agent
-  def system_prompt
-    "You are a helpful assistant that can answer questions.
-     When asked about a country, only answer with its name."
-  end
+# Define RubyLLM agents
+class CountryAgent < RubyLLM::Agent
+  model "gpt-4o"
+  instructions "You are a helpful assistant that can answer questions. " \
+               "When asked about a country, only answer with its name."
 end
 
-class Agent2 < MARS::Agent
-  def system_prompt
-    "You are a helpful assistant that can answer questions and help with tasks.
-     Return information about the typical food of the country."
-  end
+class FoodAgent < RubyLLM::Agent
+  model "gpt-4o"
+  instructions "You are a helpful assistant. Return information about the typical food of the country."
 end
 
-class Agent3 < MARS::Agent
-  def system_prompt
-    "You are a helpful assistant that can answer questions and help with tasks.
-     Return information about the popular sports of the country."
-  end
-
-  def schema
-    SportsSchema.new
-  end
+class SportsAgent < RubyLLM::Agent
+  model "gpt-4o"
+  instructions "You are a helpful assistant. Return information about the popular sports of the country."
+  schema SportsSchema
 end
 
-class Agent4 < MARS::Agent
-  def system_prompt
-    "You are a helpful assistant that can answer questions and help with tasks.
-     Return the current weather of the country's capital."
-  end
-
-  def tools
-    [Weather.new]
-  end
+class WeatherAgent < RubyLLM::Agent
+  model "gpt-4o"
+  instructions "You are a helpful assistant. Return the current weather of the country's capital."
+  tools Weather
 end
 
-# Create the LLMs
-llm1 = Agent1.new(options: { model: "gpt-4o" })
-llm2 = Agent2.new(options: { model: "gpt-4o" })
-llm3 = Agent3.new(options: { model: "gpt-4o" })
-llm4 = Agent4.new(options: { model: "gpt-4o" })
+# Define MARS steps wrapping RubyLLM agents
+class CountryStep < MARS::AgentStep
+  agent CountryAgent
+end
+
+class FoodStep < MARS::AgentStep
+  agent FoodAgent
+end
+
+class SportsStep < MARS::AgentStep
+  agent SportsAgent
+end
+
+class WeatherStep < MARS::AgentStep
+  agent WeatherAgent
+end
+
+# Create the steps
+llm1 = CountryStep.new(name: "Country")
+llm2 = FoodStep.new(name: "Food")
+llm3 = SportsStep.new(name: "Sports")
+llm4 = WeatherStep.new(name: "Weather")
 
 parallel_workflow = MARS::Workflows::Parallel.new(
   "Parallel workflow",

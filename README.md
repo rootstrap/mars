@@ -47,47 +47,53 @@ Here's a simple example to get you started:
 ```ruby
 require 'mars'
 
-# Define agents
-class Agent1 < Mars::Agent
+# Define a RubyLLM agent
+class MyAgent < RubyLLM::Agent
+  model "gpt-4o"
+  instructions "You are a helpful assistant."
 end
 
-class Agent2 < Mars::Agent
+# Wrap it in a MARS step
+class MyStep < MARS::AgentStep
+  agent MyAgent
 end
 
-class Agent3 < Mars::Agent
-end
-
-# Create agents
-agent1 = Agent1.new
-agent2 = Agent2.new
-agent3 = Agent3.new
+# Create steps
+step1 = MyStep.new(name: "step1")
+step2 = MyStep.new(name: "step2")
+step3 = MyStep.new(name: "step3")
 
 # Create a sequential workflow
-workflow = Mars::Workflows::Sequential.new(
+workflow = MARS::Workflows::Sequential.new(
   "My First Workflow",
-  steps: [agent1, agent2, agent3]
+  steps: [step1, step2, step3]
 )
 
 # Run the workflow
-result = workflow.run("Your input here")
+context = workflow.run("Your input here")
+context.current_input  # final output
+context[:step1]        # access any step's output by name
 ```
 
 ## Core Concepts
 
-### Agents
+### Agent Steps
 
-Agents are the basic building blocks of MARS. They represent individual units of work:
+Agent steps are the basic building blocks of MARS. They wrap a `RubyLLM::Agent` subclass for workflow orchestration:
 
 ```ruby
-class CustomAgent < Mars::Agent
-  def system_prompt
-    "You are a helpful assistant"
-  end
+class ResearcherAgent < RubyLLM::Agent
+  model "gpt-4o"
+  instructions "You research topics thoroughly."
+  tools WebSearch
+  schema OutputSchema
 end
 
-agent = CustomAgent.new(
-  options: { model: "gpt-4o" }
-)
+class ResearcherStep < MARS::AgentStep
+  agent ResearcherAgent
+end
+
+step = ResearcherStep.new(name: "researcher")
 ```
 
 ### Sequential Workflows
@@ -95,7 +101,7 @@ agent = CustomAgent.new(
 Execute agents one after another, passing outputs as inputs:
 
 ```ruby
-sequential = Mars::Workflows::Sequential.new(
+sequential = MARS::Workflows::Sequential.new(
   "Sequential Pipeline",
   steps: [agent1, agent2, agent3]
 )
@@ -106,12 +112,12 @@ sequential = Mars::Workflows::Sequential.new(
 Run multiple agents concurrently and aggregate their results:
 
 ```ruby
-aggregator = Mars::Aggregator.new(
+aggregator = MARS::Aggregator.new(
   "Results Aggregator",
   operation: lambda { |results| results.join(", ") }
 )
 
-parallel = Mars::Workflows::Parallel.new(
+parallel = MARS::Workflows::Parallel.new(
   "Parallel Pipeline",
   steps: [agent1, agent2, agent3],
   aggregator: aggregator
@@ -123,7 +129,7 @@ parallel = Mars::Workflows::Parallel.new(
 Create conditional branching in your workflows:
 
 ```ruby
-gate = Mars::Gate.new(
+gate = MARS::Gate.new(
   "Decision Gate",
   condition: ->(input) { input[:score] > 0.5 ? :success : :failure },
   branches: {
@@ -138,7 +144,7 @@ gate = Mars::Gate.new(
 Generate Mermaid diagrams to visualize your workflows:
 
 ```ruby
-diagram = Mars::Rendering::Mermaid.new(workflow).render
+diagram = MARS::Rendering::Mermaid.new(workflow).render
 File.write("workflow_diagram.md", diagram)
 ```
 
@@ -197,7 +203,7 @@ The gem is available as open source under the terms of the [MIT License](https:/
 
 ## Code of Conduct
 
-Everyone interacting in the Mars project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/rootstrap/mars/blob/main/CODE_OF_CONDUCT.md).
+Everyone interacting in the MARS project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/rootstrap/mars/blob/main/CODE_OF_CONDUCT.md).
 
 ## Credits
 

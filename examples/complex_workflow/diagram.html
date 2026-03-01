@@ -1,5 +1,21 @@
-```mermaid
-flowchart LR
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Main Pipeline</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; background: #fafafa; }
+    h1 { color: #333; }
+    #diagram { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  </style>
+</head>
+<body>
+  <h1>Main Pipeline</h1>
+  <div id="diagram"></div>
+  <script type="module">
+    import { renderMermaidSVG } from "https://esm.sh/beautiful-mermaid@1";
+    const diagram = `flowchart LR
 in((In))
 out((Out))
 agent1[agent1]
@@ -40,5 +56,9 @@ agent2 --> parallel_workflow_aggregator
 parallel_workflow_aggregator --> parallel_workflow_2_aggregator
 agent3 --> parallel_workflow_aggregator
 parallel_workflow_2_aggregator --> out
-agent5 --> parallel_workflow_2_aggregator
-```
+agent5 --> parallel_workflow_2_aggregator`;
+    const svg = renderMermaidSVG(diagram);
+    document.getElementById("diagram").innerHTML = svg;
+  </script>
+</body>
+</html>
