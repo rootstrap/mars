@@ -23,11 +23,16 @@ module MARS
       end
 
       def graph_mermaid
-        nodes_mermaid + subgraphs_mermaid + edges_mermaid
+        top_level_nodes_mermaid + subgraphs_mermaid + edges_mermaid
       end
 
-      def nodes_mermaid
-        nodes.keys.map { |node_id| "#{node_id}#{shape(node_id)}" }
+      def top_level_nodes_mermaid
+        subgraph_node_ids = subgraphs.values.flat_map(&:nodes).to_set
+        nodes.keys.reject { |id| subgraph_node_ids.include?(id) }.map { |id| node_definition(id) }
+      end
+
+      def node_definition(node_id)
+        "#{node_id}#{shape(node_id)}"
       end
 
       def subgraphs_mermaid
@@ -87,7 +92,7 @@ module MARS
         if subgraphs.key?(node_id)
           render_subgraph(node_id, "#{indent}  ")
         else
-          "#{indent}  #{node_id}"
+          "#{indent}  #{node_definition(node_id)}"
         end
       end
     end

@@ -62,4 +62,5 @@ main_workflow = MARS::Workflows::Sequential.new(
 # Generate and save the diagram
 diagram = MARS::Rendering::Mermaid.new(main_workflow).render
 File.write("examples/complex_workflow/diagram.md", diagram)
+MARS::Rendering::Html.new(main_workflow).write("examples/complex_workflow/diagram.html")
 puts "Complex workflow diagram saved to: examples/complex_workflow/diagram.md"

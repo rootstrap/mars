@@ -3,13 +3,10 @@ flowchart LR
 in((In))
 out((Out))
 aggregator[Aggregator]
-agent1[Agent1]
-agent2[Agent2]
-agent3[Agent3]
 subgraph parallel_workflow["Parallel workflow"]
-  agent1
-  agent2
-  agent3
+  agent1[agent1]
+  agent2[agent2]
+  agent3[agent3]
 end
 in --> agent1
 in --> agent2

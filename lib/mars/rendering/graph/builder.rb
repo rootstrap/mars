@@ -33,9 +33,15 @@ module MARS
         end
 
         def add_node_to_subgraph(id, node_id)
-          return if subgraphs[id]&.nodes&.include?(node_id)
+          return if node_in_any_subgraph?(node_id)
 
           subgraphs[id].nodes << node_id
+        end
+
+        private
+
+        def node_in_any_subgraph?(node_id)
+          subgraphs.values.any? { |sg| sg.nodes.include?(node_id) }
         end
       end
     end

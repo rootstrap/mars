@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parallel workflow</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; background: #fafafa; }
+    h1 { color: #333; }
+    #diagram { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  </style>
+</head>
+<body>
+  <h1>Parallel workflow</h1>
+  <div id="diagram"></div>
+  <script type="module">
+    import { renderMermaidSVG } from "https://esm.sh/beautiful-mermaid@1";
+    const diagram = `flowchart LR
+in((In))
+out((Out))
+aggregator[Aggregator]
+subgraph parallel_workflow["Parallel workflow"]
+  agent1[agent1]
+  agent2[agent2]
+  agent3[agent3]
+end
+in --> agent1
+in --> agent2
+in --> agent3
+agent1 --> aggregator
+aggregator --> out
+agent2 --> aggregator
+agent3 --> aggregator`;
+    const svg = renderMermaidSVG(diagram);
+    document.getElementById("diagram").innerHTML = svg;
+  </script>
+</body>
+</html>
