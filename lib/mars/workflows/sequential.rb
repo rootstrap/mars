@@ -11,14 +11,7 @@ module MARS
 
       def run(input)
         @steps.each do |step|
-          result = step.run(input)
-
-          if result.is_a?(Runnable)
-            input = result.run(input)
-            break
-          else
-            input = result
-          end
+          input = step.run(input)
         end
 
         input
