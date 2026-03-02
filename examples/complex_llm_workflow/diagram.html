@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sequential workflow</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; background: #fafafa; }
+    h1 { color: #333; }
+    #diagram { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  </style>
+</head>
+<body>
+  <h1>Sequential workflow</h1>
+  <div id="diagram"></div>
+  <script type="module">
+    import { renderMermaidSVG } from "https://esm.sh/beautiful-mermaid@1";
+    const diagram = `flowchart LR
+in((In))
+out((Out))
+subgraph sequential_workflow["Sequential workflow"]
+  country[Country]
+  gate{Gate}
+  subgraph parallel_workflow["Parallel workflow"]
+    food[Food]
+    sports[Sports]
+    weather[Weather]
+  end
+  parallel_workflow_aggregator[Parallel workflow Aggregator]
+end
+in --> country
+country --> gate
+gate -->|failure| out
+gate --> food
+gate --> sports
+gate --> weather
+food --> parallel_workflow_aggregator
+parallel_workflow_aggregator --> out
+sports --> parallel_workflow_aggregator
+weather --> parallel_workflow_aggregator`;
+    const svg = renderMermaidSVG(diagram);
+    document.getElementById("diagram").innerHTML = svg;
+  </script>
+</body>
+</html>

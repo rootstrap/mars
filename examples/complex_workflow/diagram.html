@@ -39,12 +39,11 @@ agent1 --> gate
 gate -->|warning| agent4
 gate -->|error| agent2
 gate -->|error| agent3
-gate --> agent4
-gate --> agent5
 agent4 --> agent2
 agent4 --> agent3
 agent2 --> parallel_workflow_aggregator
 parallel_workflow_aggregator --> parallel_workflow_2_aggregator
+parallel_workflow_aggregator --> agent5
 agent3 --> parallel_workflow_aggregator
 parallel_workflow_2_aggregator --> out
 agent5 --> parallel_workflow_2_aggregator`;

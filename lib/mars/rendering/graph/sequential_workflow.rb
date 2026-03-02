@@ -20,18 +20,29 @@ module MARS
 
         def build_steps_graph(builder, parent_id, value)
           sink_nodes = []
+          extra_parents = []
 
           steps.each do |step|
             sink_nodes = step.to_graph(builder, parent_id: parent_id, value: value)
-            value = nil # We don't want to pass the value to subsequent steps
-            parent_id = step.node_id
+            extra_parents.each { |ep| builder.add_edge(ep, step.node_id) }
 
-            builder.add_node_to_subgraph(node_id, step.node_id)
+            value = nil
+            parent_id, extra_parents = process_sink_nodes(sink_nodes, step)
 
-            sink_nodes.each { |sink_node| builder.add_node_to_subgraph(node_id, sink_node) }
+            add_to_subgraph(builder, step, sink_nodes)
           end
 
           [parent_id, value, sink_nodes]
+        end
+
+        def process_sink_nodes(sink_nodes, step)
+          unique_sinks = sink_nodes.uniq
+          [unique_sinks.first || step.node_id, unique_sinks.drop(1)]
+        end
+
+        def add_to_subgraph(builder, step, sink_nodes)
+          builder.add_node_to_subgraph(node_id, step.node_id)
+          sink_nodes.each { |sink_node| builder.add_node_to_subgraph(node_id, sink_node) }
         end
       end
     end

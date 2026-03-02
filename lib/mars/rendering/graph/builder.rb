@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "set"
+
 module MARS
   module Rendering
     module Graph
@@ -14,9 +16,10 @@ module MARS
 
         def add_edge(from, to, value = nil)
           return unless from && to
+          return if adjacency[from].include?([to, value])
+          return if reachable?(to, from)
 
-          # can we avoid visiting the node twice instead?
-          adjacency[from] << [to, value] unless adjacency[from].include?([to, value])
+          adjacency[from] << [to, value]
           adjacency[to] = [] unless adjacency[to]
         end
 
@@ -42,6 +45,23 @@ module MARS
 
         def node_in_any_subgraph?(node_id)
           subgraphs.values.any? { |sg| sg.nodes.include?(node_id) }
+        end
+
+        def reachable?(from, target)
+          visited = Set.new
+          queue = [from]
+
+          while queue.any?
+            current = queue.shift
+            next if visited.include?(current)
+
+            visited << current
+            return true if current == target
+
+            adjacency[current]&.each { |(to, _)| queue << to }
+          end
+
+          false
         end
       end
     end
