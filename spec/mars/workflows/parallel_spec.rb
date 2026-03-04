@@ -82,11 +82,11 @@ RSpec.describe MARS::Workflows::Parallel do
         "AlwaysBranch",
         condition: ->(_input) { :branch },
         branches: {
-          branch: Class.new(MARS::Runnable) {
+          branch: Class.new(MARS::Runnable) do
             def run(input)
               "branched:#{input}"
             end
-          }.new
+          end.new
         }
       )
       add_five = add_step_class.new(5)

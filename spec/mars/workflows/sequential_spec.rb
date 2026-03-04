@@ -68,11 +68,11 @@ RSpec.describe MARS::Workflows::Sequential do
         "AlwaysBranch",
         condition: ->(_input) { :branch },
         branches: {
-          branch: Class.new(MARS::Runnable) {
+          branch: Class.new(MARS::Runnable) do
             def run(input)
               "branched:#{input}"
             end
-          }.new
+          end.new
         }
       )
       multiply_three = multiply_step_class.new(3)
