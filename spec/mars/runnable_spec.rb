@@ -42,6 +42,73 @@ RSpec.describe MARS::Runnable do
     end
   end
 
+  describe "#name" do
+    it "defaults to nil for anonymous classes" do
+      klass = Class.new(described_class)
+      expect(klass.new.name).to be_nil
+    end
+
+    it "can be set via the name keyword" do
+      runnable = described_class.new(name: "my_step")
+      expect(runnable.name).to eq("my_step")
+    end
+
+    it "derives step_name from the class name" do
+      stub_const("MARS::MyCustomStep", Class.new(described_class))
+      expect(MARS::MyCustomStep.new.name).to eq("my_custom_step")
+    end
+  end
+
+  describe "#formatter" do
+    it "defaults to a Formatter instance" do
+      runnable = described_class.new
+      expect(runnable.formatter).to be_a(MARS::Formatter)
+    end
+
+    it "can be set via the formatter keyword" do
+      custom_formatter = MARS::Formatter.new
+      runnable = described_class.new(formatter: custom_formatter)
+      expect(runnable.formatter).to eq(custom_formatter)
+    end
+
+    it "uses the class-level formatter when declared" do
+      custom_formatter_class = Class.new(MARS::Formatter)
+      klass = Class.new(described_class) do
+        formatter custom_formatter_class
+      end
+
+      expect(klass.new.formatter).to be_a(custom_formatter_class)
+    end
+  end
+
+  describe "hooks" do
+    it "includes Hooks module" do
+      expect(described_class.ancestors).to include(MARS::Hooks)
+    end
+
+    it "supports before_run hooks" do
+      klass = Class.new(described_class)
+      calls = []
+      klass.before_run { |_ctx, step| calls << step.name }
+
+      step = klass.new(name: "test")
+      step.run_before_hooks(MARS::ExecutionContext.new(input: "x"))
+
+      expect(calls).to eq(["test"])
+    end
+
+    it "supports after_run hooks" do
+      klass = Class.new(described_class)
+      calls = []
+      klass.after_run { |_ctx, result, _step| calls << result }
+
+      step = klass.new(name: "test")
+      step.run_after_hooks(MARS::ExecutionContext.new(input: "x"), "result")
+
+      expect(calls).to eq(["result"])
+    end
+  end
+
   describe "inheritance" do
     it "can be inherited" do
       subclass = Class.new(described_class)

@@ -3,12 +3,9 @@
 module MARS
   module Workflows
     class Parallel < Runnable
-      attr_reader :name
-
       def initialize(name, steps:, aggregator: nil, **kwargs)
-        super(**kwargs)
+        super(name: name, **kwargs)
 
-        @name = name
         @steps = steps
         @aggregator = aggregator || Aggregator.new("#{name} Aggregator")
       end
