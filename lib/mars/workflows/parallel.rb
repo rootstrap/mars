@@ -26,7 +26,9 @@ module MARS
 
         raise AggregateError, errors if errors.any?
 
-        aggregator.run(results)
+        has_halt = results.any? { |r| r.is_a?(Halt) }
+        result = aggregator.run(results)
+        has_halt ? Halt.new(result) : result
       end
 
       private

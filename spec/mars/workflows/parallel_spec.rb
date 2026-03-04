@@ -77,6 +77,27 @@ RSpec.describe MARS::Workflows::Parallel do
       expect(workflow.run(42)).to eq([])
     end
 
+    it "propagates Halt to parent workflow when a step halts" do
+      gate = MARS::Gate.new(
+        "AlwaysBranch",
+        condition: ->(_input) { :branch },
+        branches: {
+          branch: Class.new(MARS::Runnable) {
+            def run(input)
+              "branched:#{input}"
+            end
+          }.new
+        }
+      )
+      add_five = add_step_class.new(5)
+
+      workflow = described_class.new("halt_workflow", steps: [gate, add_five])
+
+      result = workflow.run(10)
+      # Aggregator runs on all results, but output is wrapped in Halt
+      expect(result).to be_a(MARS::Halt)
+    end
+
     it "propagates errors from steps" do
       add_step = add_step_class.new(5)
       error_step = error_step_class.new("Step failed", "error_step_one")

@@ -27,12 +27,16 @@ RSpec.describe MARS::Gate do
         )
       end
 
-      it "executes the matched branch directly" do
-        expect(gate.run("hi")).to eq("short: hi")
+      it "returns a Halt wrapping the branch result" do
+        result = gate.run("hi")
+        expect(result).to be_a(MARS::Halt)
+        expect(result.result).to eq("short: hi")
       end
 
       it "executes the other branch for different input" do
-        expect(gate.run("longstring")).to eq("long: longstring")
+        result = gate.run("longstring")
+        expect(result).to be_a(MARS::Halt)
+        expect(result.result).to eq("long: longstring")
       end
 
       it "returns input when no branch matches" do
@@ -74,8 +78,8 @@ RSpec.describe MARS::Gate do
         end
 
         gate = gate_class.new("DSLGate")
-        expect(gate.run("hi")).to eq("quick: hi")
-        expect(gate.run("longstring")).to eq("deep: longstring")
+        expect(gate.run("hi").result).to eq("quick: hi")
+        expect(gate.run("longstring").result).to eq("deep: longstring")
       end
     end
 
@@ -107,15 +111,15 @@ RSpec.describe MARS::Gate do
       end
 
       it "routes to low branch" do
-        expect(gate.run(5)).to eq("low:5")
+        expect(gate.run(5).result).to eq("low:5")
       end
 
       it "routes to medium branch" do
-        expect(gate.run(25)).to eq("med:25")
+        expect(gate.run(25).result).to eq("med:25")
       end
 
       it "routes to high branch" do
-        expect(gate.run(100)).to eq("high:100")
+        expect(gate.run(100).result).to eq("high:100")
       end
     end
   end

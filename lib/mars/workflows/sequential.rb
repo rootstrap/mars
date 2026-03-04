@@ -12,6 +12,11 @@ module MARS
       def run(input)
         @steps.each do |step|
           input = step.run(input)
+
+          if input.is_a?(Halt)
+            input = input.result
+            break
+          end
         end
 
         input

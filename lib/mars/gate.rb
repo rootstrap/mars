@@ -31,7 +31,7 @@ module MARS
 
       return input unless branch
 
-      resolve_branch(branch).run(input)
+      Halt.new(resolve_branch(branch).run(input))
     end
 
     private

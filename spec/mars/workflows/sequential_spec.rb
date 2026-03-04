@@ -62,6 +62,27 @@ RSpec.describe MARS::Workflows::Sequential do
       expect(workflow.run(42)).to eq(42)
     end
 
+    it "halts when a step returns a Halt" do
+      add_five = add_step_class.new(5)
+      gate = MARS::Gate.new(
+        "AlwaysBranch",
+        condition: ->(_input) { :branch },
+        branches: {
+          branch: Class.new(MARS::Runnable) {
+            def run(input)
+              "branched:#{input}"
+            end
+          }.new
+        }
+      )
+      multiply_three = multiply_step_class.new(3)
+
+      workflow = described_class.new("halt_workflow", steps: [add_five, gate, multiply_three])
+
+      # 10 + 5 = 15, gate branches -> "branched:15", multiply_three is never reached
+      expect(workflow.run(10)).to eq("branched:15")
+    end
+
     it "propagates errors from steps" do
       add_step = add_step_class.new(5)
       error_step = error_step_class.new("Step failed")
