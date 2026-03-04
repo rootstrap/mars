@@ -3,7 +3,7 @@
 module MARS
   module Rendering
     module Graph
-      module Agent
+      module AgentStep
         include Base
 
         def to_graph(builder, parent_id: nil, value: nil)
@@ -11,10 +11,6 @@ module MARS
           builder.add_edge(parent_id, node_id, value)
 
           [node_id]
-        end
-
-        def name
-          self.class.name
         end
       end
     end
