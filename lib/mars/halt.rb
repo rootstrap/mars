@@ -2,10 +2,14 @@
 
 module MARS
   class Halt
-    attr_reader :result
+    attr_reader :result, :scope
 
-    def initialize(result)
+    def initialize(result, scope: :local)
       @result = result
+      @scope = scope
     end
+
+    def local? = scope == :local
+    def global? = scope == :global
   end
 end

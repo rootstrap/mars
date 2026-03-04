@@ -16,9 +16,10 @@ module MARS
 
         raise AggregateError, errors if errors.any?
 
-        has_halt = results.any?(Halt)
-        result = aggregator.run(results)
-        has_halt ? Halt.new(result) : result
+        has_global_halt = results.any? { |r| r.is_a?(Halt) && r.global? }
+        unwrapped = results.map { |r| r.is_a?(Halt) ? r.result : r }
+        result = aggregator.run(unwrapped)
+        has_global_halt ? Halt.new(result, scope: :global) : result
       end
 
       private

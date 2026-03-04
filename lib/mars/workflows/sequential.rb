@@ -13,10 +13,12 @@ module MARS
         @steps.each do |step|
           input = step.run(input)
 
-          if input.is_a?(Halt)
-            input = input.result
-            break
-          end
+          next unless input.is_a?(Halt)
+
+          return input if input.global?
+
+          input = input.result
+          break
         end
 
         input

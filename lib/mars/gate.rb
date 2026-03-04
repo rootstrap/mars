@@ -3,40 +3,47 @@
 module MARS
   class Gate < Runnable
     class << self
-      def condition(&block)
-        @condition_block = block
+      def check(&block)
+        @check_block = block
       end
 
-      attr_reader :condition_block
+      attr_reader :check_block
 
-      def branch(key, runnable)
-        branches_map[key] = runnable
+      def fallback(key, runnable)
+        fallbacks_map[key] = runnable
       end
 
-      def branches_map
-        @branches_map ||= {}
+      def fallbacks_map
+        @fallbacks_map ||= {}
+      end
+
+      def halt_scope(scope = nil)
+        scope ? @halt_scope = scope : @halt_scope
       end
     end
 
-    def initialize(name = "Gate", condition: nil, branches: nil, **kwargs)
+    def initialize(name = "Gate", check: nil, fallbacks: nil, halt_scope: nil, **kwargs)
       super(name: name, **kwargs)
 
-      @condition = condition || self.class.condition_block
-      @branches = branches || self.class.branches_map
+      @check = check || self.class.check_block
+      @fallbacks = fallbacks || self.class.fallbacks_map
+      @halt_scope = halt_scope || self.class.halt_scope || :local
     end
 
     def run(input)
-      result = condition.call(input)
-      branch = branches[result]
+      result = check.call(input)
 
-      return input unless branch
+      return input unless result
 
-      Halt.new(resolve_branch(branch).run(input))
+      branch = fallbacks[result]
+      raise ArgumentError, "No fallback registered for #{result.inspect}" unless branch
+
+      Halt.new(resolve_branch(branch).run(input), scope: @halt_scope)
     end
 
     private
 
-    attr_reader :condition, :branches
+    attr_reader :check, :fallbacks
 
     def resolve_branch(branch)
       branch.is_a?(Class) ? branch.new : branch
