@@ -11,10 +11,14 @@ module MARS
       end
 
       def run(input)
+        context = ensure_context(input)
         errors = []
-        results = execute_steps(input, errors)
+        child_contexts = []
+        results = execute_steps(context, errors, child_contexts)
 
         raise AggregateError, errors if errors.any?
+
+        context.merge(child_contexts)
 
         has_global_halt = results.any? { |r| r.is_a?(Halt) && r.global? }
         unwrapped = results.map { |r| r.is_a?(Halt) ? r.result : r }
@@ -26,11 +30,27 @@ module MARS
 
       attr_reader :steps, :aggregator
 
-      def execute_steps(input, errors)
+      def execute_steps(context, errors, child_contexts)
         Async do |workflow|
           tasks = steps.map do |step|
+            child_ctx = context.fork
+            child_contexts << child_ctx
+
             workflow.async do
-              step.run(input)
+              step.run_before_hooks(child_ctx)
+
+              step_input = step.formatter.format_input(child_ctx)
+              result = step.run(step_input)
+
+              if result.is_a?(Halt)
+                step.run_after_hooks(child_ctx, result)
+                result
+              else
+                formatted = step.formatter.format_output(result)
+                child_ctx.record(step.name, formatted)
+                step.run_after_hooks(child_ctx, formatted)
+                formatted
+              end
             rescue StandardError => e
               errors << { error: e, step_name: step.name }
             end
@@ -38,6 +58,10 @@ module MARS
 
           tasks.map(&:wait)
         end.result
+      end
+
+      def ensure_context(input)
+        input.is_a?(ExecutionContext) ? input : ExecutionContext.new(input: input)
       end
     end
   end
