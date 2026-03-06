@@ -7,6 +7,7 @@ require "ruby_llm/schema"
 
 loader = Zeitwerk::Loader.for_gem
 loader.inflector.inflect("mars" => "MARS")
+loader.ignore("#{__dir__}/mars_rb.rb")
 loader.setup
 
 module MARS

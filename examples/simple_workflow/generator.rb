@@ -4,38 +4,42 @@
 require_relative "../../lib/mars"
 
 # Define the LLMs
-class Agent1 < MARS::Agent
+class Agent1 < MARS::AgentStep
 end
 
-class Agent2 < MARS::Agent
+class Agent2 < MARS::AgentStep
 end
 
-class Agent3 < MARS::Agent
+class Agent3 < MARS::AgentStep
+end
+
+class Agent4 < MARS::AgentStep
 end
 
 # Create the LLMs
 llm1 = Agent1.new
 llm2 = Agent2.new
 llm3 = Agent3.new
+llm4 = Agent4.new
 
-# Create the success workflow (LLM 2 -> LLM 3)
-success_workflow = MARS::Workflows::Sequential.new(
-  "Success workflow",
-  steps: [llm2, llm3]
+# Create the failure workflow (LLM 3)
+failure_workflow = MARS::Workflows::Sequential.new(
+  "Failure workflow",
+  steps: [llm4]
 )
 
 # Create the gate that decides between exit or continue
 gate = MARS::Gate.new(
   check: ->(input) { input[:result] },
   fallbacks: {
-    success: success_workflow
+    failure: failure_workflow
   }
 )
 
 # Create the main workflow: LLM 1 -> Gate
 main_workflow = MARS::Workflows::Sequential.new(
   "Main Pipeline",
-  steps: [llm1, gate]
+  steps: [llm1, gate, llm2, llm3]
 )
 
 # Generate and save the diagram

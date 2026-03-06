@@ -38,21 +38,21 @@ class Weather < RubyLLM::Tool
 end
 
 # Define LLMs
-class Agent1 < MARS::Agent
+class Agent1 < MARS::AgentStep
   def system_prompt
     "You are a helpful assistant that can answer questions.
      When asked about a country, only answer with its name."
   end
 end
 
-class Agent2 < MARS::Agent
+class Agent2 < MARS::AgentStep
   def system_prompt
     "You are a helpful assistant that can answer questions and help with tasks.
      Return information about the typical food of the country."
   end
 end
 
-class Agent3 < MARS::Agent
+class Agent3 < MARS::AgentStep
   def system_prompt
     "You are a helpful assistant that can answer questions and help with tasks.
      Return information about the popular sports of the country."
@@ -63,7 +63,7 @@ class Agent3 < MARS::Agent
   end
 end
 
-class Agent4 < MARS::Agent
+class Agent4 < MARS::AgentStep
   def system_prompt
     "You are a helpful assistant that can answer questions and help with tasks.
      Return the current weather of the country's capital."
@@ -75,10 +75,10 @@ class Agent4 < MARS::Agent
 end
 
 # Create the LLMs
-llm1 = Agent1.new(options: { model: "gpt-4o" })
-llm2 = Agent2.new(options: { model: "gpt-4o" })
-llm3 = Agent3.new(options: { model: "gpt-4o" })
-llm4 = Agent4.new(options: { model: "gpt-4o" })
+llm1 = Agent1.new
+llm2 = Agent2.new
+llm3 = Agent3.new
+llm4 = Agent4.new
 
 parallel_workflow = MARS::Workflows::Parallel.new(
   "Parallel workflow",

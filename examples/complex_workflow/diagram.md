@@ -2,14 +2,14 @@
 flowchart LR
 in((In))
 out((Out))
-agent1[Agent1]
+agent1[agent1]
 gate{Gate}
-agent4[Agent4]
+agent4[agent4]
 parallel_workflow_aggregator[Parallel workflow Aggregator]
-agent2[Agent2]
-agent3[Agent3]
+agent2[agent2]
+agent3[agent3]
 parallel_workflow_2_aggregator[Parallel workflow 2 Aggregator]
-agent5[Agent5]
+agent5[agent5]
 subgraph parallel_workflow_2["Parallel workflow 2"]
   sequential_workflow
   agent5

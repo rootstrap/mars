@@ -4,13 +4,13 @@
 require_relative "../../lib/mars"
 
 # Define the LLMs
-class Agent1 < MARS::Agent
+class Agent1 < MARS::AgentStep
 end
 
-class Agent2 < MARS::Agent
+class Agent2 < MARS::AgentStep
 end
 
-class Agent3 < MARS::Agent
+class Agent3 < MARS::AgentStep
 end
 
 # Create the LLMs
