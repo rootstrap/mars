@@ -91,8 +91,8 @@ error_workflow = MARS::Workflows::Sequential.new(
 )
 
 gate = MARS::Gate.new(
-  condition: ->(input) { input.split.length < 10 ? :success : :failure },
-  branches: {
+  check: ->(input) { :failure unless input.split.length < 10 },
+  fallbacks: {
     failure: error_workflow
   }
 )

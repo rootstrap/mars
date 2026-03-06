@@ -46,8 +46,8 @@ parallel_workflow2 = MARS::Workflows::Parallel.new(
 
 # Create the gate that decides between exit or continue
 gate = MARS::Gate.new(
-  condition: ->(input) { input[:result] },
-  branches: {
+  check: ->(input) { input[:result] },
+  fallbacks: {
     warning: sequential_workflow,
     error: parallel_workflow
   }

@@ -26,8 +26,8 @@ success_workflow = MARS::Workflows::Sequential.new(
 
 # Create the gate that decides between exit or continue
 gate = MARS::Gate.new(
-  condition: ->(input) { input[:result] },
-  branches: {
+  check: ->(input) { input[:result] },
+  fallbacks: {
     success: success_workflow
   }
 )

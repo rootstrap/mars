@@ -120,16 +120,26 @@ parallel = MARS::Workflows::Parallel.new(
 
 ### Gates
 
-Create conditional branching in your workflows:
+Gates act as guards that either let the workflow continue or divert to a fallback path:
 
 ```ruby
 gate = MARS::Gate.new(
-  "Decision Gate",
-  condition: ->(input) { input[:score] > 0.5 ? :success : :failure },
-  branches: {
-    success: success_workflow,
+  "Validation Gate",
+  check: ->(input) { :failure unless input[:score] > 0.5 },
+  fallbacks: {
     failure: failure_workflow
   }
+)
+```
+
+Control halt scope — `:local` (default) stops only the parent workflow, `:global` propagates to the root:
+
+```ruby
+gate = MARS::Gate.new(
+  "Critical Gate",
+  check: ->(input) { :error unless input[:valid] },
+  fallbacks: { error: error_workflow },
+  halt_scope: :global
 )
 ```
 

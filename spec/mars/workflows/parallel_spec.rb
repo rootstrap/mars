@@ -77,6 +77,51 @@ RSpec.describe MARS::Workflows::Parallel do
       expect(workflow.run(42)).to eq([])
     end
 
+    it "unwraps local halts and returns plain result" do
+      gate = MARS::Gate.new(
+        "LocalBranch",
+        check: ->(_input) { :branch },
+        fallbacks: {
+          branch: Class.new(MARS::Runnable) do
+            def run(input)
+              "branched:#{input}"
+            end
+          end.new
+        }
+      )
+      add_five = add_step_class.new(5)
+
+      workflow = described_class.new("halt_workflow", steps: [gate, add_five])
+
+      result = workflow.run(10)
+      # Local halts are unwrapped, aggregated as plain values
+      expect(result).not_to be_a(MARS::Halt)
+      expect(result).to eq(["branched:10", 15])
+    end
+
+    it "propagates global halt to parent workflow" do
+      gate = MARS::Gate.new(
+        "GlobalBranch",
+        check: ->(_input) { :branch },
+        fallbacks: {
+          branch: Class.new(MARS::Runnable) do
+            def run(input)
+              "branched:#{input}"
+            end
+          end.new
+        },
+        halt_scope: :global
+      )
+      add_five = add_step_class.new(5)
+
+      workflow = described_class.new("halt_workflow", steps: [gate, add_five])
+
+      result = workflow.run(10)
+      expect(result).to be_a(MARS::Halt)
+      expect(result).to be_global
+      expect(result.result).to eq(["branched:10", 15])
+    end
+
     it "propagates errors from steps" do
       add_step = add_step_class.new(5)
       error_step = error_step_class.new("Step failed", "error_step_one")

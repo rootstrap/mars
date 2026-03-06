@@ -10,8 +10,8 @@ module MARS
           builder.add_node(node_id, name, Node::GATE)
           builder.add_edge(parent_id, node_id, value)
 
-          sink_nodes = branches.map do |condition_result, branch|
-            branch.to_graph(builder, parent_id: node_id, value: condition_result)
+          sink_nodes = fallbacks.map do |fallback_key, branch|
+            branch.to_graph(builder, parent_id: node_id, value: fallback_key)
           end
 
           sink_nodes.flatten

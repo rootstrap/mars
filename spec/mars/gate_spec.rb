@@ -1,83 +1,127 @@
 # frozen_string_literal: true
 
 RSpec.describe MARS::Gate do
+  let(:fallback_step) do
+    Class.new(MARS::Runnable) do
+      def run(input)
+        "fallback: #{input}"
+      end
+    end.new
+  end
+
+  let(:error_step) do
+    Class.new(MARS::Runnable) do
+      def run(input)
+        "error: #{input}"
+      end
+    end.new
+  end
+
   describe "#run" do
-    let(:gate) { described_class.new("TestGate", condition: condition, branches: branches) }
+    context "with constructor-based configuration" do
+      it "passes through when check returns falsy" do
+        gate = described_class.new(
+          "PassGate",
+          check: ->(_input) {},
+          fallbacks: { fail: fallback_step }
+        )
 
-    context "with simple boolean condition" do
-      let(:condition) { ->(input) { input > 5 } }
-      let(:false_branch) { instance_spy(MARS::Runnable) }
-      let(:branches) { { false => false_branch } }
-
-      it "returns the input when no branch matches" do
-        result = gate.run(10)
-        expect(result).to eq(10)
+        expect(gate.run("hello")).to eq("hello")
       end
 
-      it "returns the false branch when condition is false" do
-        result = gate.run(3)
+      it "halts with fallback result when check returns a key" do
+        gate = described_class.new(
+          "FailGate",
+          check: ->(_input) { :fail },
+          fallbacks: { fail: fallback_step }
+        )
 
-        expect(result).to eq(false_branch)
+        result = gate.run("hello")
+        expect(result).to be_a(MARS::Halt)
+        expect(result.result).to eq("fallback: hello")
       end
 
-      it "does not run the false branch when condition is false" do
-        gate.run(3)
+      it "raises when check returns an unregistered key" do
+        gate = described_class.new(
+          "BadGate",
+          check: ->(_input) { :unknown },
+          fallbacks: { fail: fallback_step }
+        )
 
-        expect(false_branch).not_to have_received(:run)
+        expect { gate.run("hello") }.to raise_error(ArgumentError, /No fallback registered for :unknown/)
+      end
+
+      it "selects among multiple fallbacks" do
+        gate = described_class.new(
+          "MultiFallback",
+          check: ->(input) { input[:error_type] },
+          fallbacks: { timeout: fallback_step, auth: error_step }
+        )
+
+        input = { error_type: :auth }
+        result = gate.run(input)
+        expect(result).to be_a(MARS::Halt)
+        expect(result.result).to eq("error: #{input}")
       end
     end
 
-    context "with string-based condition" do
-      let(:condition) { ->(input) { input.length > 5 ? "long" : "short" } }
-      let(:long_branch) { instance_spy(MARS::Runnable) }
-      let(:short_branch) { instance_spy(MARS::Runnable) }
-      let(:branches) { { "long" => long_branch, "short" => short_branch } }
-
-      it "routes to long branch for long strings" do
-        result = gate.run("longstring")
-
-        expect(result).to eq(long_branch)
-      end
-
-      it "routes to short branch for short strings" do
-        result = gate.run("hi")
-
-        expect(result).to eq(short_branch)
-      end
-    end
-
-    context "with complex condition logic" do
-      let(:condition) do
-        lambda do |input|
-          case input
-          when 0..10 then "low"
-          when 11..50 then "medium"
-          else "high"
+    context "with class-level DSL" do
+      let(:fallback_cls) do
+        Class.new(MARS::Runnable) do
+          def run(input)
+            "handled: #{input}"
           end
         end
       end
 
-      let(:low_branch) { instance_spy(MARS::Runnable) }
-      let(:medium_branch) { instance_spy(MARS::Runnable) }
-      let(:high_branch) { instance_spy(MARS::Runnable) }
-      let(:branches) { { "low" => low_branch, "medium" => medium_branch, "high" => high_branch } }
+      it "uses check and fallback DSL" do
+        cls = fallback_cls
+        gate_class = Class.new(described_class) do
+          check { |input| :invalid if input.length > 5 }
+          fallback :invalid, cls
+        end
 
-      it "routes to low branch" do
-        result = gate.run(5)
-
-        expect(result).to eq(low_branch)
+        gate = gate_class.new("DSLGate")
+        expect(gate.run("hi")).to eq("hi")
+        expect(gate.run("longstring").result).to eq("handled: longstring")
       end
 
-      it "routes to medium branch" do
-        result = gate.run(25)
+      it "supports halt_scope DSL" do
+        cls = fallback_cls
+        gate_class = Class.new(described_class) do
+          check { |_input| :fail }
+          fallback :fail, cls
+          halt_scope :global
+        end
 
-        expect(result).to eq(medium_branch)
+        result = gate_class.new("GlobalGate").run("test")
+        expect(result).to be_a(MARS::Halt)
+        expect(result).to be_global
+      end
+    end
+
+    context "with halt scope" do
+      it "defaults to local scope" do
+        gate = described_class.new(
+          "LocalGate",
+          check: ->(_input) { :fail },
+          fallbacks: { fail: fallback_step }
+        )
+
+        result = gate.run("hello")
+        expect(result).to be_local
       end
 
-      it "routes to high branch" do
-        result = gate.run(100)
+      it "respects constructor halt_scope" do
+        gate = described_class.new(
+          "GlobalGate",
+          check: ->(_input) { :fail },
+          fallbacks: { fail: fallback_step },
+          halt_scope: :global
+        )
 
-        expect(result).to eq(high_branch)
+        result = gate.run("hello")
+        expect(result).to be_global
       end
     end
   end

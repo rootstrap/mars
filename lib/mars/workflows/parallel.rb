@@ -12,8 +12,23 @@ module MARS
 
       def run(input)
         errors = []
-        results = Async do |workflow|
-          tasks = @steps.map do |step|
+        results = execute_steps(input, errors)
+
+        raise AggregateError, errors if errors.any?
+
+        has_global_halt = results.any? { |r| r.is_a?(Halt) && r.global? }
+        unwrapped = results.map { |r| r.is_a?(Halt) ? r.result : r }
+        result = aggregator.run(unwrapped)
+        has_global_halt ? Halt.new(result, scope: :global) : result
+      end
+
+      private
+
+      attr_reader :steps, :aggregator
+
+      def execute_steps(input, errors)
+        Async do |workflow|
+          tasks = steps.map do |step|
             workflow.async do
               step.run(input)
             rescue StandardError => e
@@ -23,15 +38,7 @@ module MARS
 
           tasks.map(&:wait)
         end.result
-
-        raise AggregateError, errors if errors.any?
-
-        aggregator.run(results)
       end
-
-      private
-
-      attr_reader :steps, :aggregator
     end
   end
 end
