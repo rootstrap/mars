@@ -11,11 +11,11 @@ module MARS
     end
 
     def [](step_name)
-      outputs[step_name]
+      outputs[step_name.to_sym]
     end
 
     def record(step_name, output)
-      @outputs[step_name] = output
+      @outputs[step_name.to_sym] = output
       @current_input = output
     end
 

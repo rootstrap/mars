@@ -2,9 +2,11 @@
 
 RSpec.describe MARS::Workflows::Parallel do
   let(:sum_aggregator) { MARS::Aggregator.new("Sum Aggregator", operation: lambda(&:sum)) }
+
   let(:add_step_class) do
-    Class.new do
-      def initialize(value)
+    Class.new(MARS::Runnable) do
+      def initialize(value, **kwargs)
+        super(**kwargs)
         @value = value
       end
 
@@ -16,8 +18,9 @@ RSpec.describe MARS::Workflows::Parallel do
   end
 
   let(:multiply_step_class) do
-    Class.new do
-      def initialize(multiplier)
+    Class.new(MARS::Runnable) do
+      def initialize(multiplier, **kwargs)
+        super(**kwargs)
         @multiplier = multiplier
       end
 
@@ -28,12 +31,10 @@ RSpec.describe MARS::Workflows::Parallel do
   end
 
   let(:error_step_class) do
-    Class.new do
-      attr_reader :name
-
-      def initialize(message, name)
+    Class.new(MARS::Runnable) do
+      def initialize(message, **kwargs)
+        super(**kwargs)
         @message = message
-        @name = name
       end
 
       def run(_input)
@@ -44,9 +45,9 @@ RSpec.describe MARS::Workflows::Parallel do
 
   describe "#run" do
     it "executes steps in parallel without an aggregator" do
-      add_five = add_step_class.new(5)
-      multiply_three = multiply_step_class.new(3)
-      add_two = add_step_class.new(2)
+      add_five = add_step_class.new(5, name: "add_five")
+      multiply_three = multiply_step_class.new(3, name: "multiply_three")
+      add_two = add_step_class.new(2, name: "add_two")
 
       workflow = described_class.new("math_workflow", steps: [add_five, multiply_three, add_two])
 
@@ -55,9 +56,9 @@ RSpec.describe MARS::Workflows::Parallel do
     end
 
     it "executes steps in parallel with a custom aggregator" do
-      add_five = add_step_class.new(5)
-      multiply_three = multiply_step_class.new(3)
-      add_two = add_step_class.new(2)
+      add_five = add_step_class.new(5, name: "add_five")
+      multiply_three = multiply_step_class.new(3, name: "multiply_three")
+      add_two = add_step_class.new(2, name: "add_two")
       workflow = described_class.new("math_workflow", steps: [add_five, multiply_three, add_two],
                                                       aggregator: sum_aggregator)
 
@@ -65,7 +66,7 @@ RSpec.describe MARS::Workflows::Parallel do
     end
 
     it "handles single step" do
-      multiply_step = multiply_step_class.new(7)
+      multiply_step = multiply_step_class.new(7, name: "multiply")
       workflow = described_class.new("single_step", steps: [multiply_step])
 
       expect(workflow.run(6)).to eq([42])
@@ -77,42 +78,123 @@ RSpec.describe MARS::Workflows::Parallel do
       expect(workflow.run(42)).to eq([])
     end
 
+    it "records outputs in context per step" do
+      step1 = Class.new(MARS::Runnable) do
+        def run(input) = "from_step1:#{input}"
+      end.new(name: "step1")
+
+      step2 = Class.new(MARS::Runnable) do
+        def run(input) = "from_step2:#{input}"
+      end.new(name: "step2")
+
+      context = MARS::ExecutionContext.new(input: "hello")
+      workflow = described_class.new("ctx_workflow", steps: [step1, step2])
+      workflow.run(context)
+
+      expect(context[:step1]).to eq("from_step1:hello")
+      expect(context[:step2]).to eq("from_step2:hello")
+    end
+
+    it "forks context so parallel steps get independent current_input" do
+      step1 = Class.new(MARS::Runnable) do
+        def run(input) = "#{input}_modified"
+      end.new(name: "step1")
+
+      step2 = Class.new(MARS::Runnable) do
+        def run(input) = "#{input}_also_modified"
+      end.new(name: "step2")
+
+      context = MARS::ExecutionContext.new(input: "original")
+      workflow = described_class.new("fork_test", steps: [step1, step2])
+      workflow.run(context)
+
+      # Both steps received the same original input
+      expect(context[:step1]).to eq("original_modified")
+      expect(context[:step2]).to eq("original_also_modified")
+    end
+
+    it "shares global_state across forked contexts" do
+      step1 = Class.new(MARS::Runnable) do
+        def run(_input)
+          "done"
+        end
+      end.new(name: "step1")
+
+      context = MARS::ExecutionContext.new(input: "test", global_state: { shared: true })
+      workflow = described_class.new("shared_state", steps: [step1])
+      workflow.run(context)
+
+      expect(context.global_state[:shared]).to be true
+    end
+
+    it "calls formatter on each step" do
+      uppercase_formatter = Class.new(MARS::Formatter) do
+        def format_output(output)
+          output.upcase
+        end
+      end
+
+      step = Class.new(MARS::Runnable) do
+        def run(input) = "result:#{input}"
+      end.new(name: "step", formatter: uppercase_formatter.new)
+
+      workflow = described_class.new("fmt_workflow", steps: [step])
+
+      expect(workflow.run("hello")).to eq(["RESULT:HELLO"])
+    end
+
+    it "fires before_run and after_run hooks" do
+      hook_log = []
+
+      step_class = Class.new(MARS::Runnable) do
+        before_run { |_ctx, step| hook_log << "before:#{step.name}" }
+        after_run { |_ctx, _result, step| hook_log << "after:#{step.name}" }
+
+        def run(input) = input
+      end
+
+      step = step_class.new(name: "hooked")
+      workflow = described_class.new("hook_workflow", steps: [step])
+      workflow.run("test")
+
+      expect(hook_log).to eq(["before:hooked", "after:hooked"])
+    end
+
     it "unwraps local halts and returns plain result" do
       gate = MARS::Gate.new(
-        "LocalBranch",
+        "local_branch",
         check: ->(_input) { :branch },
         fallbacks: {
           branch: Class.new(MARS::Runnable) do
             def run(input)
               "branched:#{input}"
             end
-          end.new
+          end.new(name: "branch_step")
         }
       )
-      add_five = add_step_class.new(5)
+      add_five = add_step_class.new(5, name: "add_five")
 
       workflow = described_class.new("halt_workflow", steps: [gate, add_five])
 
       result = workflow.run(10)
-      # Local halts are unwrapped, aggregated as plain values
       expect(result).not_to be_a(MARS::Halt)
       expect(result).to eq(["branched:10", 15])
     end
 
     it "propagates global halt to parent workflow" do
       gate = MARS::Gate.new(
-        "GlobalBranch",
+        "global_branch",
         check: ->(_input) { :branch },
         fallbacks: {
           branch: Class.new(MARS::Runnable) do
             def run(input)
               "branched:#{input}"
             end
-          end.new
+          end.new(name: "branch_step")
         },
         halt_scope: :global
       )
-      add_five = add_step_class.new(5)
+      add_five = add_step_class.new(5, name: "add_five")
 
       workflow = described_class.new("halt_workflow", steps: [gate, add_five])
 
@@ -123,9 +205,9 @@ RSpec.describe MARS::Workflows::Parallel do
     end
 
     it "propagates errors from steps" do
-      add_step = add_step_class.new(5)
-      error_step = error_step_class.new("Step failed", "error_step_one")
-      error_step_two = error_step_class.new("Step failed two", "error_step_two")
+      add_step = add_step_class.new(5, name: "add")
+      error_step = error_step_class.new("Step failed", name: "error_step_one")
+      error_step_two = error_step_class.new("Step failed two", name: "error_step_two")
 
       workflow = described_class.new("error_workflow", steps: [add_step, error_step, error_step_two])
 

@@ -4,6 +4,7 @@ module MARS
   module Rendering
     module Graph
       def self.include_extensions
+        MARS::Runnable.include(Runnable)
         MARS::AgentStep.include(AgentStep)
         MARS::Gate.include(Gate)
         MARS::Workflows::Sequential.include(SequentialWorkflow)
