@@ -8,25 +8,30 @@ module MARS
 
         def to_graph(builder, parent_id: nil, value: nil)
           builder.add_subgraph(node_id, name) if steps.any?
-          builder.add_node(aggregator.node_id, aggregator.name, Node::STEP)
+          builder.add_node(aggregator.node_id, aggregator.name, Node::STEP) if aggregator
 
-          build_steps_graph(builder, parent_id, value)
+          sink_nodes = build_steps_graph(builder, parent_id, value)
 
-          [aggregator.node_id]
+          aggregator ? [aggregator.node_id] : sink_nodes
         end
 
         private
 
         def build_steps_graph(builder, parent_id, value)
+          all_sink_nodes = []
+
           steps.each do |step|
             sink_nodes = step.to_graph(builder, parent_id: parent_id, value: value)
+            all_sink_nodes.concat(sink_nodes)
 
             builder.add_node_to_subgraph(node_id, step.node_id)
 
             sink_nodes.each do |sink_node|
-              aggregator.to_graph(builder, parent_id: sink_node)
+              builder.add_edge(sink_node, aggregator.node_id) if aggregator
             end
           end
+
+          all_sink_nodes
         end
       end
     end

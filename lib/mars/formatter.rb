@@ -7,7 +7,7 @@ module MARS
     end
 
     def format_output(output)
-      output
+      Result.wrap(output)
     end
   end
 end

@@ -47,100 +47,163 @@ Here's a simple example to get you started:
 ```ruby
 require 'mars'
 
-# Define agents
-class Agent1 < MARS::Agent
+# Define a RubyLLM agent
+class ResolveCountryAgent < RubyLLM::Agent
+  instructions "Answer with only the country name."
 end
 
-class Agent2 < MARS::Agent
+# Wrap the agent in a MARS step
+class ResolveCountry < MARS::AgentStep
+  agent ResolveCountryAgent
 end
 
-class Agent3 < MARS::Agent
+# Plain Ruby steps subclass MARS::Step
+class ResearchFood < MARS::Step
+  def run(input, ctx: {})
+    result(value: "Typical food of #{input.value}")
+  end
 end
 
-# Create agents
-agent1 = Agent1.new
-agent2 = Agent2.new
-agent3 = Agent3.new
+class ResearchSports < MARS::Step
+  def run(input, ctx: {})
+    result(value: "Popular sports of #{input.value}")
+  end
+end
 
-# Create a sequential workflow
+class BuildReport < MARS::Aggregator
+  def run(results, ctx: {})
+    result(
+      value: {
+        country: ctx[:resolve_country].value,
+        food: results[0].value,
+        sports: results[1].value
+      }
+    )
+  end
+end
+
 workflow = MARS::Workflows::Sequential.new(
-  "My First Workflow",
-  steps: [agent1, agent2, agent3]
+  "Country Report",
+  steps: [
+    ResolveCountry.new,
+    MARS::Workflows::Parallel.new(
+      "country_details",
+      steps: [
+        ResearchFood.new,
+        ResearchSports.new
+      ],
+      aggregator: BuildReport.new
+    )
+  ]
 )
 
-# Run the workflow
 result = workflow.run("Your input here")
+pp result.value
 ```
 
 ## Core Concepts
 
-### Agents
+### Steps
 
-Agents are the basic building blocks of MARS. They represent individual units of work:
+Every executable object in MARS responds to `run`. Plain Ruby steps subclass `MARS::Step`:
 
 ```ruby
-class CustomAgent < MARS::Agent
-  def system_prompt
-    "You are a helpful assistant"
+class NormalizeQuestion < MARS::Step
+  def run(input, ctx: {})
+    result(value: input.value.strip)
   end
 end
 
-agent = CustomAgent.new(
-  options: { model: "gpt-4o" }
-)
+step = NormalizeQuestion.new
+```
+
+### Agent Steps
+
+`MARS::AgentStep` is a thin wrapper around a configured `RubyLLM::Agent`:
+
+```ruby
+class CountryAgent < RubyLLM::Agent
+  instructions "Answer with only the country name."
+end
+
+class ResolveCountry < MARS::AgentStep
+  agent CountryAgent
+end
 ```
 
 ### Sequential Workflows
 
-Execute agents one after another, passing outputs as inputs:
+Sequential workflows execute steps one after another, passing the previous output to the next step:
 
 ```ruby
-sequential = MARS::Workflows::Sequential.new(
+workflow = MARS::Workflows::Sequential.new(
   "Sequential Pipeline",
-  steps: [agent1, agent2, agent3]
+  steps: [ResolveCountry.new, NormalizeQuestion.new]
 )
 ```
 
 ### Parallel Workflows
 
-Run multiple agents concurrently and aggregate their results:
+Parallel workflows use ordered `steps:`. Without an aggregator they return an array of step outputs. With an aggregator they return a single value:
 
 ```ruby
-aggregator = MARS::Aggregator.new(
-  "Results Aggregator",
-  operation: lambda { |results| results.join(", ") }
-)
+class BuildReport < MARS::Aggregator
+  def run(results, ctx: {})
+    result(
+      value: {
+        country: ctx[:resolve_country].value,
+        food: results[0].value,
+        sports: results[1].value
+      }
+    )
+  end
+end
 
 parallel = MARS::Workflows::Parallel.new(
   "Parallel Pipeline",
-  steps: [agent1, agent2, agent3],
-  aggregator: aggregator
+  steps: [
+    ResearchFood.new,
+    ResearchSports.new
+  ],
+  aggregator: BuildReport.new
 )
 ```
 
 ### Gates
 
-Gates act as guards that either let the workflow continue or divert to a fallback path:
+Gates branch out of the happy path when a condition matches. If the `check` returns `nil`, the workflow continues normally. If it returns a branch key, the selected branch runs and the current workflow stops:
 
 ```ruby
+class TooBroad < MARS::Step
+  def run(input, ctx: {})
+    result(
+      value: {
+        error: "Please ask about one country",
+        resolved_value: input.value
+      }
+    )
+  end
+end
+
 gate = MARS::Gate.new(
-  "Validation Gate",
-  check: ->(input) { :failure unless input[:score] > 0.5 },
-  fallbacks: {
-    failure: failure_workflow
+  "country_guard",
+  check: ->(input, _ctx) { :too_broad if input.value.split.size > 5 },
+  branches: {
+    too_broad: TooBroad.new
   }
 )
 ```
 
-Control halt scope — `:local` (default) stops only the parent workflow, `:global` propagates to the root:
+### Context And Result
+
+Steps receive a shared `ctx:` object and workflows always return `MARS::Result`:
 
 ```ruby
-gate = MARS::Gate.new(
-  "Critical Gate",
-  check: ->(input) { :error unless input[:valid] },
-  fallbacks: { error: error_workflow },
-  halt_scope: :global
-)
+result = workflow.run("Which is the largest country in Europe?")
+
+result.value                # final workflow output
+result.outputs[:research_food] # output captured for a step
+result.stopped?             # whether a gate branched out of the happy path
 ```
 
 ### Visualization

@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require "json"
+require "net/http"
+require "uri"
 require_relative "../../lib/mars"
 
 RubyLLM.configure do |config|
@@ -37,75 +40,94 @@ class Weather < RubyLLM::Tool
   end
 end
 
-# Define LLMs
-class Agent1 < MARS::AgentStep
-  def system_prompt
-    "You are a helpful assistant that can answer questions.
-     When asked about a country, only answer with its name."
+class ResolveCountryAgent < RubyLLM::Agent
+  instructions "Answer with only the country name."
+end
+
+class TypicalFoodAgent < RubyLLM::Agent
+  instructions "Return information about the typical food of the country."
+end
+
+class PopularSportsAgent < RubyLLM::Agent
+  instructions "Return information about the popular sports of the country."
+  schema SportsSchema.new
+end
+
+class CapitalWeatherAgent < RubyLLM::Agent
+  instructions "Return the current weather of the country's capital."
+  tools Weather.new
+end
+
+class ResolveCountry < MARS::AgentStep
+  agent ResolveCountryAgent
+end
+
+class TypicalFood < MARS::AgentStep
+  agent TypicalFoodAgent
+end
+
+class PopularSports < MARS::AgentStep
+  agent PopularSportsAgent
+end
+
+class CapitalWeather < MARS::AgentStep
+  agent CapitalWeatherAgent
+end
+
+class TooBroad < MARS::Step
+  def run(input, ctx: {})
+    result(
+      value: {
+        error: "Please ask about one country",
+        resolved_value: input.value
+      }
+    )
   end
 end
 
-class Agent2 < MARS::AgentStep
-  def system_prompt
-    "You are a helpful assistant that can answer questions and help with tasks.
-     Return information about the typical food of the country."
+class BuildReport < MARS::Aggregator
+  def run(results, ctx: {})
+    result(
+      value: {
+        country: ctx[:resolve_country].value,
+        food: results[0].value,
+        sports: results[1].value,
+        weather: results[2].value
+      }
+    )
   end
 end
-
-class Agent3 < MARS::AgentStep
-  def system_prompt
-    "You are a helpful assistant that can answer questions and help with tasks.
-     Return information about the popular sports of the country."
-  end
-
-  def schema
-    SportsSchema.new
-  end
-end
-
-class Agent4 < MARS::AgentStep
-  def system_prompt
-    "You are a helpful assistant that can answer questions and help with tasks.
-     Return the current weather of the country's capital."
-  end
-
-  def tools
-    [Weather.new]
-  end
-end
-
-# Create the LLMs
-llm1 = Agent1.new
-llm2 = Agent2.new
-llm3 = Agent3.new
-llm4 = Agent4.new
 
 parallel_workflow = MARS::Workflows::Parallel.new(
   "Parallel workflow",
-  steps: [llm2, llm3, llm4]
-)
-
-error_workflow = MARS::Workflows::Sequential.new(
-  "Error workflow",
-  steps: []
+  steps: [
+    TypicalFood.new,
+    PopularSports.new,
+    CapitalWeather.new
+  ],
+  aggregator: BuildReport.new
 )
 
 gate = MARS::Gate.new(
-  check: ->(input) { :failure unless input.split.length < 10 },
-  fallbacks: {
-    failure: error_workflow
+  "country_guard",
+  check: ->(input, _ctx) { :failure unless input.value.split.length < 10 },
+  branches: {
+    failure: TooBroad.new
   }
 )
 
 sequential_workflow = MARS::Workflows::Sequential.new(
   "Sequential workflow",
-  steps: [llm1, gate, parallel_workflow]
+  steps: [
+    ResolveCountry.new,
+    gate,
+    parallel_workflow
+  ]
 )
 
-# Generate and save the diagram
 diagram = MARS::Rendering::Mermaid.new(sequential_workflow).render
 File.write("examples/complex_llm_workflow/diagram.md", diagram)
 puts "Complex workflow diagram saved to: examples/complex_llm_workflow/diagram.md"
 
-# Run the workflow
-puts sequential_workflow.run("Which is the largest country in Europe?")
+result = sequential_workflow.run("Which is the largest country in Europe?")
+pp result.value

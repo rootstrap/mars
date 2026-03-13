@@ -2,16 +2,17 @@
 
 module MARS
   module Workflows
-    class Parallel < Runnable
+    class Parallel < Step
       def initialize(name, steps:, aggregator: nil, **kwargs)
         super(name: name, **kwargs)
 
         @steps = steps
-        @aggregator = aggregator || Aggregator.new("#{name} Aggregator")
+        @aggregator = aggregator
       end
 
-      def run(input)
-        context = ensure_context(input)
+      def run(input, ctx: {})
+        nested = ctx.is_a?(Context)
+        context = nested ? ctx : ensure_context(input)
         errors = []
         child_contexts = []
         results = execute_steps(context, errors, child_contexts)
@@ -20,15 +21,24 @@ module MARS
 
         context.merge(child_contexts)
 
-        has_global_halt = results.any? { |r| r.is_a?(Halt) && r.global? }
-        unwrapped = results.map { |r| r.is_a?(Halt) ? r.result : r }
-        result = aggregator.run(unwrapped)
-        has_global_halt ? Halt.new(result, scope: :global) : result
+        value = aggregator ? aggregator.run(results, ctx: context) : result(value: results)
+
+        return Result.wrap(value, stopped: false) if nested
+
+        Result.wrap(
+          value,
+          outputs: context.outputs.dup,
+          state: context.state
+        )
       end
 
       private
 
       attr_reader :steps, :aggregator
+
+      def ensure_context(input)
+        input.is_a?(Context) ? input : Context.new(input: input)
+      end
 
       def execute_steps(context, errors, child_contexts)
         Async do |workflow|
@@ -37,31 +47,31 @@ module MARS
             child_contexts << child_ctx
 
             workflow.async do
-              step.run_before_hooks(child_ctx)
-
-              step_input = step.formatter.format_input(child_ctx)
-              result = step.run(step_input)
-
-              if result.is_a?(Halt)
-                step.run_after_hooks(child_ctx, result)
-                result
-              else
-                formatted = step.formatter.format_output(result)
-                child_ctx.record(step.name, formatted)
-                step.run_after_hooks(child_ctx, formatted)
-                formatted
-              end
+              execute_step(step, child_ctx)
             rescue StandardError => e
               errors << { error: e, step_name: step.name }
             end
           end
 
-          tasks.map(&:wait)
+          tasks.map(&:wait).compact
         end.result
       end
 
-      def ensure_context(input)
-        input.is_a?(ExecutionContext) ? input : ExecutionContext.new(input: input)
+      def execute_step(step, child_ctx)
+        step.run_before_hooks(child_ctx)
+
+        step_input = Result.wrap(step.formatter.format_input(child_ctx))
+        result = step.run(step_input, ctx: child_ctx)
+        formatted = Result.wrap(step.formatter.format_output(result))
+
+        child_ctx.record(step.name, formatted)
+        step.run_after_hooks(child_ctx, formatted)
+        formatted
+      rescue Context::Stop => e
+        formatted = Result.wrap(step.formatter.format_output(e.result), stopped: true)
+        child_ctx.record(step.name, formatted)
+        step.run_after_hooks(child_ctx, formatted)
+        formatted
       end
     end
   end

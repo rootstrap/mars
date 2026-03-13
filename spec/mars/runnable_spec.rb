@@ -6,15 +6,15 @@ RSpec.describe MARS::Runnable do
       let(:runnable) { described_class.new }
 
       it "raises NotImplementedError" do
-        expect { runnable.run("any input") }.to raise_error(NotImplementedError)
+        expect { runnable.run({ value: "any input" }, ctx: {}) }.to raise_error(NotImplementedError)
       end
     end
 
     context "when implemented in a subclass" do
       let(:test_runnable_class) do
         Class.new(MARS::Runnable) do
-          def run(input)
-            "processed: #{input}"
+          def run(input, ctx: {})
+            MARS::Result.new(value: "processed: #{input.value}")
           end
         end
       end
@@ -22,8 +22,8 @@ RSpec.describe MARS::Runnable do
       let(:runnable) { test_runnable_class.new }
 
       it "can be successfully overridden" do
-        result = runnable.run("test input")
-        expect(result).to eq("processed: test input")
+        result = runnable.run(MARS::Result.new(value: "test input"), ctx: {})
+        expect(result).to eq(MARS::Result.new(value: "processed: test input"))
       end
     end
 
@@ -37,7 +37,7 @@ RSpec.describe MARS::Runnable do
       let(:runnable) { incomplete_runnable_class.new }
 
       it "still raises NotImplementedError" do
-        expect { runnable.run("input") }.to raise_error(NotImplementedError)
+        expect { runnable.run(MARS::Result.new(value: "input"), ctx: {}) }.to raise_error(NotImplementedError)
       end
     end
   end
@@ -92,7 +92,7 @@ RSpec.describe MARS::Runnable do
       klass.before_run { |_ctx, step| calls << step.name }
 
       step = klass.new(name: "test")
-      step.run_before_hooks(MARS::ExecutionContext.new(input: "x"))
+      step.run_before_hooks(MARS::Context.new(input: "x"))
 
       expect(calls).to eq(["test"])
     end
@@ -103,9 +103,10 @@ RSpec.describe MARS::Runnable do
       klass.after_run { |_ctx, result, _step| calls << result }
 
       step = klass.new(name: "test")
-      step.run_after_hooks(MARS::ExecutionContext.new(input: "x"), "result")
+      result = MARS::Result.new(value: "result")
+      step.run_after_hooks(MARS::Context.new(input: "x"), result)
 
-      expect(calls).to eq(["result"])
+      expect(calls).to eq([result])
     end
   end
 

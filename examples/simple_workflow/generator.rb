@@ -3,46 +3,41 @@
 
 require_relative "../../lib/mars"
 
-# Define the LLMs
-class Agent1 < MARS::AgentStep
+class ResolveCountryAgent < RubyLLM::Agent
+  instructions "Answer with only the country name."
 end
 
-class Agent2 < MARS::AgentStep
+class ResolveCountry < MARS::AgentStep
+  agent ResolveCountryAgent
 end
 
-class Agent3 < MARS::AgentStep
+class TooBroad < MARS::Step
+  def run(input, ctx: {})
+    result(
+      value: {
+        error: "Please ask about one country",
+        resolved_value: input.value
+      }
+    )
+  end
 end
 
-class Agent4 < MARS::AgentStep
-end
-
-# Create the LLMs
-llm1 = Agent1.new
-llm2 = Agent2.new
-llm3 = Agent3.new
-llm4 = Agent4.new
-
-# Create the failure workflow (LLM 3)
-failure_workflow = MARS::Workflows::Sequential.new(
-  "Failure workflow",
-  steps: [llm4]
-)
-
-# Create the gate that decides between exit or continue
 gate = MARS::Gate.new(
-  check: ->(input) { input[:result] },
-  fallbacks: {
-    failure: failure_workflow
+  "country_guard",
+  check: ->(input, _ctx) { :too_broad if input.value.split.size > 5 },
+  branches: {
+    too_broad: TooBroad.new
   }
 )
 
-# Create the main workflow: LLM 1 -> Gate
 main_workflow = MARS::Workflows::Sequential.new(
   "Main Pipeline",
-  steps: [llm1, gate, llm2, llm3]
+  steps: [
+    ResolveCountry.new,
+    gate
+  ]
 )
 
-# Generate and save the diagram
 diagram = MARS::Rendering::Mermaid.new(main_workflow).render
 File.write("examples/simple_workflow/diagram.md", diagram)
 puts "Simple workflow diagram saved to: examples/simple_workflow/diagram.md"

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module MARS
-  class Gate < Runnable
+  class Gate < Step
     class << self
       def check(&block)
         @check_block = block
@@ -9,41 +9,47 @@ module MARS
 
       attr_reader :check_block
 
+      def branch(key, runnable)
+        branches_map[key] = runnable
+      end
+
       def fallback(key, runnable)
-        fallbacks_map[key] = runnable
+        branch(key, runnable)
       end
 
-      def fallbacks_map
-        @fallbacks_map ||= {}
-      end
-
-      def halt_scope(scope = nil)
-        scope ? @halt_scope = scope : @halt_scope
+      def branches_map
+        @branches_map ||= {}
       end
     end
 
-    def initialize(name = "Gate", check: nil, fallbacks: nil, halt_scope: nil, **kwargs)
+    def initialize(name = "Gate", check: nil, branches: nil, fallbacks: nil, **kwargs)
       super(name: name, **kwargs)
 
       @check = check || self.class.check_block
-      @fallbacks = fallbacks || self.class.fallbacks_map
-      @halt_scope = halt_scope || self.class.halt_scope || :local
+      @branches = branches || fallbacks || self.class.branches_map
     end
 
-    def run(input)
-      result = check.call(input)
+    def run(input, ctx: {})
+      input = Result.wrap(input)
+      local_ctx = ctx.is_a?(Context) ? ctx : Context.new(input: input)
+      decision = evaluate_check(input, local_ctx)
 
-      return input unless result
+      return input unless decision
 
-      branch = fallbacks[result]
-      raise ArgumentError, "No fallback registered for #{result.inspect}" unless branch
+      branch = branches[decision]
+      raise ArgumentError, "No branch registered for #{decision.inspect}" unless branch
 
-      Halt.new(resolve_branch(branch).run(input), scope: @halt_scope)
+      branch_result = resolve_branch(branch).run(input, ctx: local_ctx.fork(input: input))
+      Result.wrap(branch_result, stopped: true)
     end
 
     private
 
-    attr_reader :check, :fallbacks
+    attr_reader :check, :branches
+
+    def evaluate_check(input, ctx)
+      check.call(input, ctx)
+    end
 
     def resolve_branch(branch)
       branch.is_a?(Class) ? branch.new : branch

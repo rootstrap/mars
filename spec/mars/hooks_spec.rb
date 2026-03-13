@@ -35,7 +35,7 @@ RSpec.describe MARS::Hooks do
       hookable_class.before_run { |ctx, step| calls << [ctx, step.name] }
 
       step = hookable_class.new("test_step")
-      context = MARS::ExecutionContext.new(input: "input")
+      context = MARS::Context.new(input: "input")
       step.run_before_hooks(context)
 
       expect(calls).to eq([[context, "test_step"]])
@@ -47,7 +47,7 @@ RSpec.describe MARS::Hooks do
       hookable_class.before_run { |_ctx, _step| order << :second }
 
       step = hookable_class.new("test_step")
-      step.run_before_hooks(MARS::ExecutionContext.new(input: "input"))
+      step.run_before_hooks(MARS::Context.new(input: "input"))
 
       expect(order).to eq(%i[first second])
     end
@@ -59,10 +59,11 @@ RSpec.describe MARS::Hooks do
       hookable_class.after_run { |ctx, result, step| calls << [ctx, result, step.name] }
 
       step = hookable_class.new("test_step")
-      context = MARS::ExecutionContext.new(input: "input")
-      step.run_after_hooks(context, "the result")
+      context = MARS::Context.new(input: "input")
+      result = MARS::Result.new(value: "the result")
+      step.run_after_hooks(context, result)
 
-      expect(calls).to eq([[context, "the result", "test_step"]])
+      expect(calls).to eq([[context, result, "test_step"]])
     end
   end
 

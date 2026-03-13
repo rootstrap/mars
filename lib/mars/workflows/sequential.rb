@@ -2,40 +2,26 @@
 
 module MARS
   module Workflows
-    class Sequential < Runnable
+    class Sequential < Step
       def initialize(name, steps:, **kwargs)
         super(name: name, **kwargs)
 
         @steps = steps
       end
 
-      def run(input)
-        context = ensure_context(input)
+      def run(input, ctx: {})
+        nested = ctx.is_a?(Context)
+        context = nested ? ctx : ensure_context(input)
+        value, stopped = execute(context)
 
-        @steps.each do |step|
-          step.run_before_hooks(context)
+        return Result.wrap(value, stopped: false) if nested
 
-          step_input = step.formatter.format_input(context)
-          result = step.run(step_input)
-
-          if result.is_a?(Halt)
-            if result.global?
-              step.run_after_hooks(context, result)
-              return result
-            end
-
-            formatted = step.formatter.format_output(result.result)
-            context.record(step.name, formatted)
-            step.run_after_hooks(context, formatted)
-            break
-          end
-
-          formatted = step.formatter.format_output(result)
-          context.record(step.name, formatted)
-          step.run_after_hooks(context, formatted)
-        end
-
-        context.current_input
+        Result.wrap(
+          value,
+          stopped: stopped,
+          outputs: context.outputs.dup,
+          state: context.state
+        )
       end
 
       private
@@ -43,7 +29,33 @@ module MARS
       attr_reader :steps
 
       def ensure_context(input)
-        input.is_a?(ExecutionContext) ? input : ExecutionContext.new(input: input)
+        input.is_a?(Context) ? input : Context.new(input: input)
+      end
+
+      def execute(context)
+        steps.each do |step|
+          result = execute_step(step, context)
+          return [result, true] if result.stopped?
+        rescue Context::Stop => e
+          formatted = Result.wrap(step.formatter.format_output(e.result), stopped: true)
+          context.record(step.name, formatted)
+          step.run_after_hooks(context, formatted)
+          return [formatted, true]
+        end
+
+        [context.current_input, false]
+      end
+
+      def execute_step(step, context)
+        step.run_before_hooks(context)
+
+        step_input = Result.wrap(step.formatter.format_input(context))
+        result = step.run(step_input, ctx: context)
+        formatted = Result.wrap(step.formatter.format_output(result))
+
+        context.record(step.name, formatted)
+        step.run_after_hooks(context, formatted)
+        formatted
       end
     end
   end

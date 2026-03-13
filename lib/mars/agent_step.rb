@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
 module MARS
-  class AgentStep < Runnable
+  class AgentStep < Step
     class << self
       def agent(klass = nil)
         klass ? @agent_class = klass : @agent_class
       end
     end
 
-    def run(input)
-      self.class.agent.new.ask(input).content
+    def run(input, ctx: {})
+      result(value: self.class.agent.new.ask(input.value).content)
     end
   end
 end

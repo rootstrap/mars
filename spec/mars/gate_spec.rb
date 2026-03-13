@@ -1,18 +1,20 @@
 # frozen_string_literal: true
 
 RSpec.describe MARS::Gate do
+  let(:context) { MARS::Context.new(input: "hello") }
+
   let(:fallback_step) do
-    Class.new(MARS::Runnable) do
-      def run(input)
-        "fallback: #{input}"
+    Class.new(MARS::Step) do
+      def run(input, ctx: {})
+        MARS::Result.new(value: "fallback: #{input.value}")
       end
     end.new
   end
 
   let(:error_step) do
-    Class.new(MARS::Runnable) do
-      def run(input)
-        "error: #{input}"
+    Class.new(MARS::Step) do
+      def run(input, ctx: {})
+        MARS::Result.new(value: "error: #{input.value}")
       end
     end.new
   end
@@ -22,54 +24,50 @@ RSpec.describe MARS::Gate do
       it "passes through when check returns falsy" do
         gate = described_class.new(
           "PassGate",
-          check: ->(_input) {},
-          fallbacks: { fail: fallback_step }
+          check: ->(_input, _ctx) {},
+          branches: { fail: fallback_step }
         )
 
-        expect(gate.run("hello")).to eq("hello")
+        expect(gate.run(MARS::Result.new(value: "hello"), ctx: context)).to eq(MARS::Result.new(value: "hello"))
       end
 
-      it "halts with fallback result when check returns a key" do
+      it "returns branch result when check returns a key" do
         gate = described_class.new(
           "FailGate",
-          check: ->(_input) { :fail },
-          fallbacks: { fail: fallback_step }
+          check: ->(_input, _ctx) { :fail },
+          branches: { fail: fallback_step }
         )
 
-        result = gate.run("hello")
-        expect(result).to be_a(MARS::Halt)
-        expect(result.result).to eq("fallback: hello")
+        expect(gate.run(MARS::Result.new(value: "hello"), ctx: context)).to eq(MARS::Result.new(value: "fallback: hello", stopped: true))
       end
 
       it "raises when check returns an unregistered key" do
         gate = described_class.new(
           "BadGate",
-          check: ->(_input) { :unknown },
-          fallbacks: { fail: fallback_step }
+          check: ->(_input, _ctx) { :unknown },
+          branches: { fail: fallback_step }
         )
 
-        expect { gate.run("hello") }.to raise_error(ArgumentError, /No fallback registered for :unknown/)
+        expect { gate.run(MARS::Result.new(value: "hello"), ctx: context) }.to raise_error(ArgumentError, /No branch registered for :unknown/)
       end
 
-      it "selects among multiple fallbacks" do
+      it "selects among multiple branches" do
         gate = described_class.new(
           "MultiFallback",
-          check: ->(input) { input[:error_type] },
-          fallbacks: { timeout: fallback_step, auth: error_step }
+          check: ->(input, _ctx) { input.value[:error_type] },
+          branches: { timeout: fallback_step, auth: error_step }
         )
 
-        input = { error_type: :auth }
-        result = gate.run(input)
-        expect(result).to be_a(MARS::Halt)
-        expect(result.result).to eq("error: #{input}")
+        input = MARS::Result.new(value: { error_type: :auth })
+        expect(gate.run(input, ctx: context)).to eq(MARS::Result.new(value: "error: #{input.value}", stopped: true))
       end
     end
 
     context "with class-level DSL" do
       let(:fallback_cls) do
-        Class.new(MARS::Runnable) do
-          def run(input)
-            "handled: #{input}"
+        Class.new(MARS::Step) do
+          def run(input, ctx: {})
+            MARS::Result.new(value: "handled: #{input.value}")
           end
         end
       end
@@ -77,52 +75,48 @@ RSpec.describe MARS::Gate do
       it "uses check and fallback DSL" do
         cls = fallback_cls
         gate_class = Class.new(described_class) do
-          check { |input| :invalid if input.length > 5 }
-          fallback :invalid, cls
+          check { |input, _ctx| :invalid if input.value.length > 5 }
+          branch :invalid, cls
         end
 
         gate = gate_class.new("DSLGate")
-        expect(gate.run("hi")).to eq("hi")
-        expect(gate.run("longstring").result).to eq("handled: longstring")
-      end
-
-      it "supports halt_scope DSL" do
-        cls = fallback_cls
-        gate_class = Class.new(described_class) do
-          check { |_input| :fail }
-          fallback :fail, cls
-          halt_scope :global
-        end
-
-        result = gate_class.new("GlobalGate").run("test")
-        expect(result).to be_a(MARS::Halt)
-        expect(result).to be_global
+        expect(gate.run(MARS::Result.new(value: "hi"), ctx: context)).to eq(MARS::Result.new(value: "hi"))
+        expect(gate.run(MARS::Result.new(value: "longstring"), ctx: context)).to eq(MARS::Result.new(value: "handled: longstring", stopped: true))
       end
     end
+  end
 
-    context "with halt scope" do
-      it "defaults to local scope" do
-        gate = described_class.new(
-          "LocalGate",
-          check: ->(_input) { :fail },
-          fallbacks: { fail: fallback_step }
-        )
+  describe "inside a workflow" do
+    it "stops the current happy path after executing the selected branch" do
+      branch = Class.new(MARS::Step) do
+        def run(input, ctx: {})
+          MARS::Result.new(value: "branched:#{input.value}")
+        end
+      end.new(name: "branch_step")
 
-        result = gate.run("hello")
-        expect(result).to be_local
-      end
+      gate = described_class.new(
+        "gate",
+        check: ->(_input, _ctx) { :branch },
+        branches: { branch: branch }
+      )
 
-      it "respects constructor halt_scope" do
-        gate = described_class.new(
-          "GlobalGate",
-          check: ->(_input) { :fail },
-          fallbacks: { fail: fallback_step },
-          halt_scope: :global
-        )
+      workflow = MARS::Workflows::Sequential.new(
+        "gate_workflow",
+        steps: [
+          gate,
+          Class.new(MARS::Step) do
+            def run(input, ctx: {})
+              MARS::Result.new(value: "after:#{input.value}")
+            end
+          end.new(name: "after_step")
+        ]
+      )
 
-        result = gate.run("hello")
-        expect(result).to be_global
-      end
+      result = workflow.run("hello")
+      expect(result).to be_stopped
+      expect(result.value).to eq("branched:hello")
+      expect(result.outputs[:gate]).to eq(MARS::Result.new(value: "branched:hello", stopped: true))
+      expect(result[:after_step]).to be_nil
     end
   end
 end

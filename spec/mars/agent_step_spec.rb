@@ -18,6 +18,8 @@ RSpec.describe MARS::AgentStep do
   end
 
   describe "#run" do
+    let(:context) { MARS::Context.new(input: "hello") }
+
     let(:mock_agent_instance) do
       instance_double("RubyLLM::Agent").tap do |mock|
         allow(mock).to receive(:ask).and_return(instance_double("RubyLLM::Message", content: "agent response"))
@@ -39,9 +41,9 @@ RSpec.describe MARS::AgentStep do
 
     it "creates a new agent instance and calls ask" do
       step = step_class.new
-      result = step.run("hello")
+      result = step.run(MARS::Result.new(value: "hello"), ctx: context)
 
-      expect(result).to eq("agent response")
+      expect(result).to eq(MARS::Result.new(value: "agent response"))
       expect(mock_agent_class).to have_received(:new)
       expect(mock_agent_instance).to have_received(:ask).with("hello")
     end
@@ -49,7 +51,7 @@ RSpec.describe MARS::AgentStep do
 
   describe "inheritance" do
     it "inherits from MARS::Runnable" do
-      expect(described_class.ancestors).to include(MARS::Runnable)
+      expect(described_class.ancestors).to include(MARS::Step)
     end
 
     it "has access to name, formatter, and hooks from Runnable" do

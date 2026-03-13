@@ -3,63 +3,82 @@
 
 require_relative "../../lib/mars"
 
-# Define LLMs
-class Agent1 < MARS::AgentStep
+class NormalizeQuestion < MARS::Step
+  def run(input, ctx: {})
+    result(value: input.value.strip)
+  end
 end
 
-class Agent2 < MARS::AgentStep
+class ResearchFood < MARS::Step
+  def run(input, ctx: {})
+    result(value: "Typical food of #{input.value}")
+  end
 end
 
-class Agent3 < MARS::AgentStep
+class ResearchSports < MARS::Step
+  def run(input, ctx: {})
+    result(value: "Popular sports of #{input.value}")
+  end
 end
 
-class Agent4 < MARS::AgentStep
+class ResearchWeather < MARS::Step
+  def run(input, ctx: {})
+    result(value: "Current weather in the capital of #{input.value}")
+  end
 end
 
-class Agent5 < MARS::AgentStep
+class TooBroad < MARS::Step
+  def run(input, ctx: {})
+    result(
+      value: {
+        error: "Please ask about one country",
+        resolved_value: input.value
+      }
+    )
+  end
 end
 
-# Create the LLMs
-llm1 = Agent1.new
-llm2 = Agent2.new
-llm3 = Agent3.new
-llm4 = Agent4.new
-llm5 = Agent5.new
-
-# Create a parallel workflow (LLM 2 x LLM 3)
 parallel_workflow = MARS::Workflows::Parallel.new(
   "Parallel workflow",
-  steps: [llm2, llm3]
+  steps: [
+    ResearchFood.new,
+    ResearchSports.new
+  ]
 )
 
-# Create a sequential workflow (Parallel workflow -> LLM 4)
 sequential_workflow = MARS::Workflows::Sequential.new(
   "Sequential workflow",
-  steps: [llm4, parallel_workflow]
+  steps: [
+    parallel_workflow,
+    ResearchWeather.new
+  ]
 )
 
-# Create a parallel workflow (Sequential workflow x LLM 5)
 parallel_workflow2 = MARS::Workflows::Parallel.new(
   "Parallel workflow 2",
-  steps: [sequential_workflow, llm5]
+  steps: [
+    sequential_workflow,
+    NormalizeQuestion.new
+  ]
 )
 
-# Create the gate that decides between exit or continue
 gate = MARS::Gate.new(
-  check: ->(input) { input[:result] },
-  fallbacks: {
-    warning: sequential_workflow,
-    error: parallel_workflow
+  "country_guard",
+  check: ->(input, _ctx) { :too_broad if input.value.split.size > 5 },
+  branches: {
+    too_broad: TooBroad.new
   }
 )
 
-# Create the main workflow: LLM 1 -> Gate
 main_workflow = MARS::Workflows::Sequential.new(
   "Main Pipeline",
-  steps: [llm1, gate, parallel_workflow2]
+  steps: [
+    NormalizeQuestion.new,
+    gate,
+    parallel_workflow2
+  ]
 )
 
-# Generate and save the diagram
 diagram = MARS::Rendering::Mermaid.new(main_workflow).render
 File.write("examples/complex_workflow/diagram.md", diagram)
 puts "Complex workflow diagram saved to: examples/complex_workflow/diagram.md"

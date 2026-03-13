@@ -3,7 +3,7 @@
 RSpec.describe MARS::Rendering::Mermaid do
   it "renders a custom Runnable subclass as a box node" do
     step = Class.new(MARS::Runnable) do
-      def run(input) = input
+      def run(input, ctx: {}) = input
     end.new(name: "custom_step")
 
     mermaid = described_class.new(step)
@@ -23,10 +23,10 @@ RSpec.describe MARS::Rendering::Mermaid do
   it "renders a Gate as a diamond node" do
     gate = MARS::Gate.new(
       "my_gate",
-      check: ->(_input) { :branch },
+      check: ->(_input, _ctx) { :branch },
       fallbacks: {
         branch: Class.new(MARS::Runnable) do
-          def run(input) = input
+          def run(input, ctx: {}) = input
         end.new(name: "branch_step")
       }
     )
@@ -54,7 +54,11 @@ RSpec.describe MARS::Rendering::Mermaid do
   it "renders a Parallel workflow with aggregator" do
     step1 = MARS::AgentStep.new(name: "step1")
     step2 = MARS::AgentStep.new(name: "step2")
-    workflow = MARS::Workflows::Parallel.new("parallel", steps: [step1, step2])
+    workflow = MARS::Workflows::Parallel.new(
+      "parallel",
+      steps: [step1, step2],
+      aggregator: MARS::Aggregator.new("parallel aggregator")
+    )
 
     mermaid = described_class.new(workflow)
     output = mermaid.render

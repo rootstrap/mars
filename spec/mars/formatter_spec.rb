@@ -5,14 +5,14 @@ RSpec.describe MARS::Formatter do
 
   describe "#format_input" do
     it "returns the context's current_input" do
-      context = MARS::ExecutionContext.new(input: "hello")
-      expect(formatter.format_input(context)).to eq("hello")
+      context = MARS::Context.new(input: "hello")
+      expect(formatter.format_input(context)).to eq(MARS::Result.new(value: "hello"))
     end
   end
 
   describe "#format_output" do
-    it "returns the output unchanged" do
-      expect(formatter.format_output("result")).to eq("result")
+    it "normalizes raw output into a result" do
+      expect(formatter.format_output("result")).to eq(MARS::Result.new(value: "result"))
     end
   end
 
@@ -20,11 +20,11 @@ RSpec.describe MARS::Formatter do
     let(:custom_formatter_class) do
       Class.new(described_class) do
         def format_input(context)
-          context.current_input.upcase
+          MARS::Result.new(value: context.current_input.value.upcase)
         end
 
         def format_output(output)
-          "formatted: #{output}"
+          MARS::Result.new(value: "formatted: #{output.value}", stopped: output.stopped?)
         end
       end
     end
@@ -32,12 +32,13 @@ RSpec.describe MARS::Formatter do
     let(:custom_formatter) { custom_formatter_class.new }
 
     it "can override format_input" do
-      context = MARS::ExecutionContext.new(input: "hello")
-      expect(custom_formatter.format_input(context)).to eq("HELLO")
+      context = MARS::Context.new(input: "hello")
+      expect(custom_formatter.format_input(context)).to eq(MARS::Result.new(value: "HELLO"))
     end
 
     it "can override format_output" do
-      expect(custom_formatter.format_output("result")).to eq("formatted: result")
+      expect(custom_formatter.format_output(MARS::Result.new(value: "result")))
+        .to eq(MARS::Result.new(value: "formatted: result"))
     end
   end
 end
