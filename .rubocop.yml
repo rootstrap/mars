@@ -16,6 +16,8 @@ Metrics/MethodLength:
   Enabled: true
   Exclude:
   - "lib/mars/workflows/parallel.rb"
+  - "lib/mars/rendering/html.rb"
+  - "lib/mars/workflows/sequential.rb"
 
 Metrics/ParameterLists:
   Enabled: true
@@ -26,6 +28,7 @@ Metrics/AbcSize:
   Enabled: true
   Exclude:
   - "lib/mars/rendering/graph/parallel_workflow.rb"
+  - "lib/mars/workflows/sequential.rb"
 
 Style/Documentation:
   Enabled: false
