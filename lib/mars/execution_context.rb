@@ -19,8 +19,8 @@ module MARS
       @current_input = output
     end
 
-    def fork(input: current_input)
-      self.class.new(input: input, global_state: global_state)
+    def fork(input: current_input, state: {})
+      self.class.new(input: input, global_state: global_state.merge(state))
     end
 
     def merge(child_contexts)

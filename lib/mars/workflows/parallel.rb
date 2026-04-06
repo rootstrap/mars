@@ -36,7 +36,7 @@ module MARS
       def execute_steps(context, errors, child_contexts)
         Async do |workflow|
           tasks = steps.map do |step|
-            child_ctx = context.fork
+            child_ctx = context.fork(state: step.state)
             child_contexts << child_ctx
 
             workflow.async do
@@ -54,7 +54,8 @@ module MARS
         step.run_before_hooks(child_ctx)
 
         step_input = step.formatter.format_input(child_ctx)
-        result = step.run(step_input)
+        child_ctx.current_input = step_input
+        result = step.run(child_ctx)
 
         if result.is_a?(Halt)
           step.run_after_hooks(child_ctx, result)

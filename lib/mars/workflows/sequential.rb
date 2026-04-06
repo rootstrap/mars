@@ -16,7 +16,8 @@ module MARS
           step.run_before_hooks(context)
 
           step_input = step.formatter.format_input(context)
-          result = step.run(step_input)
+          step_context = context.fork(input: step_input, state: step.state)
+          result = step.run(step_context)
 
           if result.is_a?(Halt)
             if result.global?
