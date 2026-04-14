@@ -39,7 +39,7 @@ RSpec.describe MARS::AgentStep do
 
     it "creates a new agent instance and calls ask" do
       step = step_class.new
-      result = step.run("hello")
+      result = step.run(MARS::ExecutionContext.new(input: "hello"))
 
       expect(result).to eq("agent response")
       expect(mock_agent_class).to have_received(:new)

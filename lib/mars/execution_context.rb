@@ -2,7 +2,8 @@
 
 module MARS
   class ExecutionContext
-    attr_reader :current_input, :outputs, :global_state
+    attr_reader :outputs, :global_state
+    attr_accessor :current_input
 
     def initialize(input: nil, global_state: {})
       @current_input = input

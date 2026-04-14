@@ -8,8 +8,8 @@ module MARS
       end
     end
 
-    def run(input)
-      self.class.agent.new.ask(input).content
+    def run(context)
+      self.class.agent.new.ask(context.current_input).content
     end
   end
 end

@@ -9,7 +9,7 @@ RSpec.describe MARS::Workflows::Sequential do
       end
 
       def run(input)
-        input + @value
+        input.current_input + @value
       end
     end
   end
@@ -22,7 +22,7 @@ RSpec.describe MARS::Workflows::Sequential do
       end
 
       def run(input)
-        input * @multiplier
+        input.current_input * @multiplier
       end
     end
   end
@@ -67,11 +67,11 @@ RSpec.describe MARS::Workflows::Sequential do
 
     it "records outputs in context accessible by step name" do
       step1 = Class.new(MARS::Runnable) do
-        def run(input) = "from_step1:#{input}"
+        def run(input) = "from_step1:#{input.current_input}"
       end.new(name: "step1")
 
       step2 = Class.new(MARS::Runnable) do
-        def run(input) = "from_step2:#{input}"
+        def run(input) = "from_step2:#{input.current_input}"
       end.new(name: "step2")
 
       context = MARS::ExecutionContext.new(input: "hello")
@@ -84,7 +84,7 @@ RSpec.describe MARS::Workflows::Sequential do
 
     it "wraps raw input in ExecutionContext automatically" do
       step = Class.new(MARS::Runnable) do
-        def run(input) = "processed:#{input}"
+        def run(input) = "processed:#{input.current_input}"
       end.new(name: "step")
 
       workflow = described_class.new("auto_wrap", steps: [step])
@@ -100,7 +100,7 @@ RSpec.describe MARS::Workflows::Sequential do
       end
 
       step = Class.new(MARS::Runnable) do
-        def run(input) = "result:#{input}"
+        def run(input) = "result:#{input.current_input}"
       end.new(name: "step", formatter: uppercase_formatter.new)
 
       workflow = described_class.new("fmt_workflow", steps: [step])
@@ -115,7 +115,7 @@ RSpec.describe MARS::Workflows::Sequential do
         before_run { |_ctx, step| hook_log << "before:#{step.name}" }
         after_run { |_ctx, _result, step| hook_log << "after:#{step.name}" }
 
-        def run(input) = input
+        def run(input) = input.current_input
       end
 
       step = step_class.new(name: "hooked")
@@ -133,7 +133,7 @@ RSpec.describe MARS::Workflows::Sequential do
         fallbacks: {
           branch: Class.new(MARS::Runnable) do
             def run(input)
-              "branched:#{input}"
+              "branched:#{input.current_input}"
             end
           end.new(name: "branch_step")
         }
@@ -156,7 +156,7 @@ RSpec.describe MARS::Workflows::Sequential do
         fallbacks: {
           branch: Class.new(MARS::Runnable) do
             def run(input)
-              "branched:#{input}"
+              "branched:#{input.current_input}"
             end
           end.new(name: "branch_step")
         },
@@ -179,7 +179,7 @@ RSpec.describe MARS::Workflows::Sequential do
         fallbacks: {
           stop: Class.new(MARS::Runnable) do
             def run(input)
-              "stopped:#{input}"
+              "stopped:#{input.current_input}"
             end
           end.new(name: "stop_step")
         },
@@ -202,7 +202,7 @@ RSpec.describe MARS::Workflows::Sequential do
         fallbacks: {
           stop: Class.new(MARS::Runnable) do
             def run(input)
-              "stopped:#{input}"
+              "stopped:#{input.current_input}"
             end
           end.new(name: "stop_step")
         }
@@ -212,7 +212,7 @@ RSpec.describe MARS::Workflows::Sequential do
 
       string_step = Class.new(MARS::Runnable) do
         def run(input)
-          "after:#{input}"
+          "after:#{input.current_input}"
         end
       end.new(name: "after_step")
 
