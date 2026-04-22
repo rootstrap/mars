@@ -79,13 +79,13 @@ RSpec.describe MARS::ExecutionContext do
       expect(child.current_input).to eq("custom")
     end
 
-    it "shares global_state with the parent" do
+    it "does not share global_state with the parent" do
       context = described_class.new(input: "query", global_state: { shared: true })
       child = context.fork
 
       child.global_state[:added_by_child] = true
 
-      expect(context.global_state[:added_by_child]).to be(true)
+      expect(context.global_state[:added_by_child]).to be_nil
     end
 
     it "has independent outputs from the parent" do

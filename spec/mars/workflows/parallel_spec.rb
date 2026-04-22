@@ -12,7 +12,7 @@ RSpec.describe MARS::Workflows::Parallel do
 
       def run(input)
         sleep 0.1
-        input + @value
+        input.current_input + @value
       end
     end
   end
@@ -25,7 +25,7 @@ RSpec.describe MARS::Workflows::Parallel do
       end
 
       def run(input)
-        input * @multiplier
+        input.current_input * @multiplier
       end
     end
   end
@@ -80,11 +80,11 @@ RSpec.describe MARS::Workflows::Parallel do
 
     it "records outputs in context per step" do
       step1 = Class.new(MARS::Runnable) do
-        def run(input) = "from_step1:#{input}"
+        def run(input) = "from_step1:#{input.current_input}"
       end.new(name: "step1")
 
       step2 = Class.new(MARS::Runnable) do
-        def run(input) = "from_step2:#{input}"
+        def run(input) = "from_step2:#{input.current_input}"
       end.new(name: "step2")
 
       context = MARS::ExecutionContext.new(input: "hello")
@@ -97,11 +97,11 @@ RSpec.describe MARS::Workflows::Parallel do
 
     it "forks context so parallel steps get independent current_input" do
       step1 = Class.new(MARS::Runnable) do
-        def run(input) = "#{input}_modified"
+        def run(input) = "#{input.current_input}_modified"
       end.new(name: "step1")
 
       step2 = Class.new(MARS::Runnable) do
-        def run(input) = "#{input}_also_modified"
+        def run(input) = "#{input.current_input}_also_modified"
       end.new(name: "step2")
 
       context = MARS::ExecutionContext.new(input: "original")
@@ -135,7 +135,7 @@ RSpec.describe MARS::Workflows::Parallel do
       end
 
       step = Class.new(MARS::Runnable) do
-        def run(input) = "result:#{input}"
+        def run(input) = "result:#{input.current_input}"
       end.new(name: "step", formatter: uppercase_formatter.new)
 
       workflow = described_class.new("fmt_workflow", steps: [step])
@@ -167,7 +167,7 @@ RSpec.describe MARS::Workflows::Parallel do
         fallbacks: {
           branch: Class.new(MARS::Runnable) do
             def run(input)
-              "branched:#{input}"
+              "branched:#{input.current_input}"
             end
           end.new(name: "branch_step")
         }
@@ -188,7 +188,7 @@ RSpec.describe MARS::Workflows::Parallel do
         fallbacks: {
           branch: Class.new(MARS::Runnable) do
             def run(input)
-              "branched:#{input}"
+              "branched:#{input.current_input}"
             end
           end.new(name: "branch_step")
         },
