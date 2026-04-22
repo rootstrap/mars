@@ -9,27 +9,16 @@ module MARS
         @steps = steps
       end
 
-      def run(input)
-        context = ensure_context(input)
+      def run(context)
+        context = ensure_context(context)
 
         @steps.each do |step|
           step.run_before_hooks(context)
 
           step_input = step.formatter.format_input(context)
           context.current_input = step_input
+
           result = step.run(context)
-
-          if result.is_a?(Halt)
-            if result.global?
-              step.run_after_hooks(context, result)
-              return result
-            end
-
-            formatted = step.formatter.format_output(result.result)
-            context.record(step.name, formatted)
-            step.run_after_hooks(context, formatted)
-            break
-          end
 
           formatted = step.formatter.format_output(result)
           context.record(step.name, formatted)

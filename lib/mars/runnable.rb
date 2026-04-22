@@ -26,7 +26,7 @@ module MARS
       @formatter = formatter || self.class.formatter&.new || Formatter.new
     end
 
-    def run(input)
+    def run(context)
       raise NotImplementedError
     end
   end

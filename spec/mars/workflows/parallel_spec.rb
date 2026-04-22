@@ -10,9 +10,9 @@ RSpec.describe MARS::Workflows::Parallel do
         @value = value
       end
 
-      def run(input)
+      def run(context)
         sleep 0.1
-        input.current_input + @value
+        context.current_input + @value
       end
     end
   end
@@ -24,8 +24,8 @@ RSpec.describe MARS::Workflows::Parallel do
         @multiplier = multiplier
       end
 
-      def run(input)
-        input.current_input * @multiplier
+      def run(context)
+        context.current_input * @multiplier
       end
     end
   end
@@ -37,7 +37,7 @@ RSpec.describe MARS::Workflows::Parallel do
         @message = message
       end
 
-      def run(_input)
+      def run(_context)
         raise StandardError, @message
       end
     end
@@ -97,11 +97,11 @@ RSpec.describe MARS::Workflows::Parallel do
 
     it "forks context so parallel steps get independent current_input" do
       step1 = Class.new(MARS::Runnable) do
-        def run(input) = "#{input.current_input}_modified"
+        def run(context) = "#{context.current_input}_modified"
       end.new(name: "step1")
 
       step2 = Class.new(MARS::Runnable) do
-        def run(input) = "#{input.current_input}_also_modified"
+        def run(context) = "#{context.current_input}_also_modified"
       end.new(name: "step2")
 
       context = MARS::ExecutionContext.new(input: "original")
@@ -115,7 +115,7 @@ RSpec.describe MARS::Workflows::Parallel do
 
     it "shares global_state across forked contexts" do
       step1 = Class.new(MARS::Runnable) do
-        def run(_input)
+        def run(_context)
           "done"
         end
       end.new(name: "step1")
@@ -135,7 +135,7 @@ RSpec.describe MARS::Workflows::Parallel do
       end
 
       step = Class.new(MARS::Runnable) do
-        def run(input) = "result:#{input.current_input}"
+        def run(context) = "result:#{context.current_input}"
       end.new(name: "step", formatter: uppercase_formatter.new)
 
       workflow = described_class.new("fmt_workflow", steps: [step])
@@ -150,7 +150,7 @@ RSpec.describe MARS::Workflows::Parallel do
         before_run { |_ctx, step| hook_log << "before:#{step.name}" }
         after_run { |_ctx, _result, step| hook_log << "after:#{step.name}" }
 
-        def run(input) = input
+        def run(context) = context.current_input
       end
 
       step = step_class.new(name: "hooked")
@@ -158,50 +158,6 @@ RSpec.describe MARS::Workflows::Parallel do
       workflow.run("test")
 
       expect(hook_log).to eq(["before:hooked", "after:hooked"])
-    end
-
-    it "unwraps local halts and returns plain result" do
-      gate = MARS::Gate.new(
-        "local_branch",
-        check: ->(_input) { :branch },
-        fallbacks: {
-          branch: Class.new(MARS::Runnable) do
-            def run(input)
-              "branched:#{input.current_input}"
-            end
-          end.new(name: "branch_step")
-        }
-      )
-      add_five = add_step_class.new(5, name: "add_five")
-
-      workflow = described_class.new("halt_workflow", steps: [gate, add_five])
-
-      result = workflow.run(10)
-      expect(result).not_to be_a(MARS::Halt)
-      expect(result).to eq(["branched:10", 15])
-    end
-
-    it "propagates global halt to parent workflow" do
-      gate = MARS::Gate.new(
-        "global_branch",
-        check: ->(_input) { :branch },
-        fallbacks: {
-          branch: Class.new(MARS::Runnable) do
-            def run(input)
-              "branched:#{input.current_input}"
-            end
-          end.new(name: "branch_step")
-        },
-        halt_scope: :global
-      )
-      add_five = add_step_class.new(5, name: "add_five")
-
-      workflow = described_class.new("halt_workflow", steps: [gate, add_five])
-
-      result = workflow.run(10)
-      expect(result).to be_a(MARS::Halt)
-      expect(result).to be_global
-      expect(result.result).to eq(["branched:10", 15])
     end
 
     it "propagates errors from steps" do

@@ -16,21 +16,18 @@ module MARS
       def fallbacks_map
         @fallbacks_map ||= {}
       end
-
-      def halt_scope(scope = nil)
-        scope ? @halt_scope = scope : @halt_scope
-      end
     end
 
-    def initialize(name = "Gate", check: nil, fallbacks: nil, halt_scope: nil, **kwargs)
+    def initialize(name = "Gate", check: nil, fallbacks: nil, **kwargs)
       super(name: name, **kwargs)
 
       @check = check || self.class.check_block
       @fallbacks = fallbacks || self.class.fallbacks_map
-      @halt_scope = halt_scope || self.class.halt_scope || :local
     end
 
-    def run(input)
+    def run(context)
+      context = ensure_context(context)
+      input = context.current_input
       result = check.call(input)
 
       return input unless result
@@ -38,7 +35,7 @@ module MARS
       branch = fallbacks[result]
       raise ArgumentError, "No fallback registered for #{result.inspect}" unless branch
 
-      Halt.new(resolve_branch(branch).run(input), scope: @halt_scope)
+      resolve_branch(branch).run(context)
     end
 
     private
@@ -47,6 +44,10 @@ module MARS
 
     def resolve_branch(branch)
       branch.is_a?(Class) ? branch.new : branch
+    end
+
+    def ensure_context(input)
+      input.is_a?(ExecutionContext) ? input : ExecutionContext.new(input: input)
     end
   end
 end

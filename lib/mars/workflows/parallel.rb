@@ -10,8 +10,8 @@ module MARS
         @aggregator = aggregator || Aggregator.new("#{name} Aggregator")
       end
 
-      def run(input)
-        context = ensure_context(input)
+      def run(context)
+        context = ensure_context(context)
         errors = []
         child_contexts = []
         results = execute_steps(context, errors, child_contexts)
@@ -19,19 +19,13 @@ module MARS
         raise AggregateError, errors if errors.any?
 
         context.merge(child_contexts)
-        aggregate_results(results)
+        context.current_input = results
+        aggregator.run(context)
       end
 
       private
 
       attr_reader :steps, :aggregator
-
-      def aggregate_results(results)
-        has_global_halt = results.any? { |r| r.is_a?(Halt) && r.global? }
-        unwrapped = results.map { |r| r.is_a?(Halt) ? r.result : r }
-        result = aggregator.run(unwrapped)
-        has_global_halt ? Halt.new(result, scope: :global) : result
-      end
 
       def execute_steps(context, errors, child_contexts)
         Async do |workflow|
@@ -55,17 +49,13 @@ module MARS
 
         step_input = step.formatter.format_input(child_ctx)
         child_ctx.current_input = step_input
+
         result = step.run(child_ctx)
 
-        if result.is_a?(Halt)
-          step.run_after_hooks(child_ctx, result)
-          result
-        else
-          formatted = step.formatter.format_output(result)
-          child_ctx.record(step.name, formatted)
-          step.run_after_hooks(child_ctx, formatted)
-          formatted
-        end
+        formatted = step.formatter.format_output(result)
+        child_ctx.record(step.name, formatted)
+        step.run_after_hooks(child_ctx, formatted)
+        formatted
       end
 
       def ensure_context(input)
