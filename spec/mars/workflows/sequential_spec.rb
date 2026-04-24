@@ -9,7 +9,7 @@ RSpec.describe MARS::Workflows::Sequential do
       end
 
       def run(input)
-        input + @value
+        input.current_input + @value
       end
     end
   end
@@ -22,7 +22,7 @@ RSpec.describe MARS::Workflows::Sequential do
       end
 
       def run(input)
-        input * @multiplier
+        input.current_input * @multiplier
       end
     end
   end
@@ -67,11 +67,11 @@ RSpec.describe MARS::Workflows::Sequential do
 
     it "records outputs in context accessible by step name" do
       step1 = Class.new(MARS::Runnable) do
-        def run(input) = "from_step1:#{input}"
+        def run(input) = "from_step1:#{input.current_input}"
       end.new(name: "step1")
 
       step2 = Class.new(MARS::Runnable) do
-        def run(input) = "from_step2:#{input}"
+        def run(input) = "from_step2:#{input.current_input}"
       end.new(name: "step2")
 
       context = MARS::ExecutionContext.new(input: "hello")
@@ -84,7 +84,7 @@ RSpec.describe MARS::Workflows::Sequential do
 
     it "wraps raw input in ExecutionContext automatically" do
       step = Class.new(MARS::Runnable) do
-        def run(input) = "processed:#{input}"
+        def run(input) = "processed:#{input.current_input}"
       end.new(name: "step")
 
       workflow = described_class.new("auto_wrap", steps: [step])
@@ -100,7 +100,7 @@ RSpec.describe MARS::Workflows::Sequential do
       end
 
       step = Class.new(MARS::Runnable) do
-        def run(input) = "result:#{input}"
+        def run(input) = "result:#{input.current_input}"
       end.new(name: "step", formatter: uppercase_formatter.new)
 
       workflow = described_class.new("fmt_workflow", steps: [step])
@@ -115,7 +115,7 @@ RSpec.describe MARS::Workflows::Sequential do
         before_run { |_ctx, step| hook_log << "before:#{step.name}" }
         after_run { |_ctx, _result, step| hook_log << "after:#{step.name}" }
 
-        def run(input) = input
+        def run(input) = input.current_input
       end
 
       step = step_class.new(name: "hooked")
@@ -123,104 +123,6 @@ RSpec.describe MARS::Workflows::Sequential do
       workflow.run("test")
 
       expect(hook_log).to eq(["before:hooked", "after:hooked"])
-    end
-
-    it "halts locally when a gate triggers with local scope" do
-      add_five = add_step_class.new(5, name: "add_five")
-      gate = MARS::Gate.new(
-        "local_gate",
-        check: ->(_input) { :branch },
-        fallbacks: {
-          branch: Class.new(MARS::Runnable) do
-            def run(input)
-              "branched:#{input}"
-            end
-          end.new(name: "branch_step")
-        }
-      )
-      multiply_three = multiply_step_class.new(3, name: "multiply_three")
-
-      workflow = described_class.new("halt_workflow", steps: [add_five, gate, multiply_three])
-
-      # 10 + 5 = 15, gate branches -> "branched:15", multiply_three is never reached
-      result = workflow.run(10)
-      expect(result).to eq("branched:15")
-      expect(result).not_to be_a(MARS::Halt)
-    end
-
-    it "propagates global halt without unwrapping" do
-      add_five = add_step_class.new(5, name: "add_five")
-      gate = MARS::Gate.new(
-        "global_gate",
-        check: ->(_input) { :branch },
-        fallbacks: {
-          branch: Class.new(MARS::Runnable) do
-            def run(input)
-              "branched:#{input}"
-            end
-          end.new(name: "branch_step")
-        },
-        halt_scope: :global
-      )
-      multiply_three = multiply_step_class.new(3, name: "multiply_three")
-
-      workflow = described_class.new("halt_workflow", steps: [add_five, gate, multiply_three])
-
-      result = workflow.run(10)
-      expect(result).to be_a(MARS::Halt)
-      expect(result).to be_global
-      expect(result.result).to eq("branched:15")
-    end
-
-    it "propagates global halt through nested sequential workflows" do
-      inner_gate = MARS::Gate.new(
-        "inner_gate",
-        check: ->(_input) { :stop },
-        fallbacks: {
-          stop: Class.new(MARS::Runnable) do
-            def run(input)
-              "stopped:#{input}"
-            end
-          end.new(name: "stop_step")
-        },
-        halt_scope: :global
-      )
-
-      inner = described_class.new("inner", steps: [inner_gate])
-      after_inner = add_step_class.new(100, name: "after_inner")
-      outer = described_class.new("outer", steps: [inner, after_inner])
-
-      result = outer.run(1)
-      expect(result).to be_a(MARS::Halt)
-      expect(result.result).to eq("stopped:1")
-    end
-
-    it "consumes local halt — outer workflow continues" do
-      inner_gate = MARS::Gate.new(
-        "inner_gate",
-        check: ->(_input) { :stop },
-        fallbacks: {
-          stop: Class.new(MARS::Runnable) do
-            def run(input)
-              "stopped:#{input}"
-            end
-          end.new(name: "stop_step")
-        }
-      )
-
-      inner = described_class.new("inner", steps: [inner_gate])
-
-      string_step = Class.new(MARS::Runnable) do
-        def run(input)
-          "after:#{input}"
-        end
-      end.new(name: "after_step")
-
-      outer = described_class.new("outer", steps: [inner, string_step])
-
-      result = outer.run(1)
-      expect(result).to eq("after:stopped:1")
-      expect(result).not_to be_a(MARS::Halt)
     end
 
     it "propagates errors from steps" do

@@ -2,7 +2,8 @@
 
 module MARS
   class ExecutionContext
-    attr_reader :current_input, :outputs, :global_state
+    attr_reader :outputs, :global_state
+    attr_accessor :current_input
 
     def initialize(input: nil, global_state: {})
       @current_input = input
@@ -19,8 +20,8 @@ module MARS
       @current_input = output
     end
 
-    def fork(input: current_input)
-      self.class.new(input: input, global_state: global_state)
+    def fork(input: current_input, state: {})
+      self.class.new(input: input, global_state: global_state.merge(state))
     end
 
     def merge(child_contexts)

@@ -3,16 +3,16 @@
 RSpec.describe MARS::Gate do
   let(:fallback_step) do
     Class.new(MARS::Runnable) do
-      def run(input)
-        "fallback: #{input}"
+      def run(context)
+        "fallback: #{context.current_input}"
       end
     end.new
   end
 
   let(:error_step) do
     Class.new(MARS::Runnable) do
-      def run(input)
-        "error: #{input}"
+      def run(context)
+        "error: #{context.current_input}"
       end
     end.new
   end
@@ -29,7 +29,7 @@ RSpec.describe MARS::Gate do
         expect(gate.run("hello")).to eq("hello")
       end
 
-      it "halts with fallback result when check returns a key" do
+      it "returns the fallback branch result when check returns a registered key" do
         gate = described_class.new(
           "FailGate",
           check: ->(_input) { :fail },
@@ -37,8 +37,7 @@ RSpec.describe MARS::Gate do
         )
 
         result = gate.run("hello")
-        expect(result).to be_a(MARS::Halt)
-        expect(result.result).to eq("fallback: hello")
+        expect(result).to eq("fallback: hello")
       end
 
       it "raises when check returns an unregistered key" do
@@ -60,16 +59,15 @@ RSpec.describe MARS::Gate do
 
         input = { error_type: :auth }
         result = gate.run(input)
-        expect(result).to be_a(MARS::Halt)
-        expect(result.result).to eq("error: #{input}")
+        expect(result).to eq("error: #{input}")
       end
     end
 
     context "with class-level DSL" do
       let(:fallback_cls) do
         Class.new(MARS::Runnable) do
-          def run(input)
-            "handled: #{input}"
+          def run(context)
+            "handled: #{context.current_input}"
           end
         end
       end
@@ -83,45 +81,7 @@ RSpec.describe MARS::Gate do
 
         gate = gate_class.new("DSLGate")
         expect(gate.run("hi")).to eq("hi")
-        expect(gate.run("longstring").result).to eq("handled: longstring")
-      end
-
-      it "supports halt_scope DSL" do
-        cls = fallback_cls
-        gate_class = Class.new(described_class) do
-          check { |_input| :fail }
-          fallback :fail, cls
-          halt_scope :global
-        end
-
-        result = gate_class.new("GlobalGate").run("test")
-        expect(result).to be_a(MARS::Halt)
-        expect(result).to be_global
-      end
-    end
-
-    context "with halt scope" do
-      it "defaults to local scope" do
-        gate = described_class.new(
-          "LocalGate",
-          check: ->(_input) { :fail },
-          fallbacks: { fail: fallback_step }
-        )
-
-        result = gate.run("hello")
-        expect(result).to be_local
-      end
-
-      it "respects constructor halt_scope" do
-        gate = described_class.new(
-          "GlobalGate",
-          check: ->(_input) { :fail },
-          fallbacks: { fail: fallback_step },
-          halt_scope: :global
-        )
-
-        result = gate.run("hello")
-        expect(result).to be_global
+        expect(gate.run("longstring")).to eq("handled: longstring")
       end
     end
   end

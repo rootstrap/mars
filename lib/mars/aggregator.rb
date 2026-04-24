@@ -10,8 +10,15 @@ module MARS
       @operation = operation || ->(inputs) { inputs }
     end
 
-    def run(inputs)
-      operation.call(inputs)
+    def run(context)
+      context = ensure_context(context)
+      operation.call(context.current_input)
+    end
+
+    private
+
+    def ensure_context(input)
+      input.is_a?(ExecutionContext) ? input : ExecutionContext.new(input: input)
     end
   end
 end
