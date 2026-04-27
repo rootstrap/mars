@@ -37,41 +37,42 @@ class Weather < RubyLLM::Tool
   end
 end
 
-# Define LLMs
-class Agent1 < MARS::AgentStep
-  def system_prompt
-    "You are a helpful assistant that can answer questions.
+class ExampleAgent < RubyLLM::Agent
+  instructions "You are a helpful assistant that can answer questions.
      When asked about a country, only answer with its name."
-  end
+end
+
+class Agent1 < MARS::AgentStep
+  agent ExampleAgent
+end
+
+class FoodAgent < RubyLLM::Agent
+  instructions "You are a helpful assistant that can answer questions and help with tasks.
+     Return information about the typical food of the country."
 end
 
 class Agent2 < MARS::AgentStep
-  def system_prompt
-    "You are a helpful assistant that can answer questions and help with tasks.
-     Return information about the typical food of the country."
-  end
+  agent FoodAgent
+end
+
+class SportsAgent < RubyLLM::Agent
+  instructions "You are a helpful assistant that can answer questions and help with tasks.
+     Return information about the popular sports of the country."
+  schema SportsSchema
 end
 
 class Agent3 < MARS::AgentStep
-  def system_prompt
-    "You are a helpful assistant that can answer questions and help with tasks.
-     Return information about the popular sports of the country."
-  end
+  agent SportsAgent
+end
 
-  def schema
-    SportsSchema.new
-  end
+class WeatherAgent < RubyLLM::Agent
+  instructions "You are a helpful assistant that can answer questions and help with tasks.
+     Return the current weather of the country's capital."
+  tools Weather
 end
 
 class Agent4 < MARS::AgentStep
-  def system_prompt
-    "You are a helpful assistant that can answer questions and help with tasks.
-     Return the current weather of the country's capital."
-  end
-
-  def tools
-    [Weather.new]
-  end
+  agent WeatherAgent
 end
 
 # Create the LLMs

@@ -3,50 +3,91 @@
 
 require_relative "../../lib/mars"
 
-# Define LLMs
-class Agent1 < MARS::AgentStep
+class Step1Formatter < MARS::Formatter
+  def format_output(context)
+    context + ['formatted']
+  end
 end
 
-class Agent2 < MARS::AgentStep
+class Step1 < MARS::Runnable
+  after_run do |context, result|
+    puts "after run from Step1 #{result}"
+  end
+  formatter Step1Formatter
+
+  def run(context)
+    context.current_input + ['step1']
+  end
 end
 
-class Agent3 < MARS::AgentStep
+class Step2 < MARS::Runnable
+  after_run do |context, result|
+    puts "after run from Step2 #{result}"
+  end
+
+  def run(context)
+    context.current_input + ['step2']
+  end
 end
 
-class Agent4 < MARS::AgentStep
+class Step3 < MARS::Runnable
+  after_run do |context, result|
+   puts "after run from Step3 #{result}"
+  end
+
+  def run(context)
+    context.current_input + ['step3']
+  end
 end
 
-class Agent5 < MARS::AgentStep
+class Step4 < MARS::Runnable
+  after_run do |context, result|
+    puts "after run from Step4 #{result}"
+  end
+
+  def run(context)
+    context.current_input + ['step4']
+  end
 end
 
-# Create the LLMs
-llm1 = Agent1.new
-llm2 = Agent2.new
-llm3 = Agent3.new
-llm4 = Agent4.new
-llm5 = Agent5.new
+class Step5 < MARS::Runnable
+  after_run do |context, result|
+    puts "after run from Step5 #{result}"
+  end
 
-# Create a parallel workflow (LLM 2 x LLM 3)
+  def run(context)
+    context.current_input + ['step5']
+  end
+end
+
+# Create the Steps
+step1 = Step1.new
+step2 = Step2.new
+step3 = Step3.new
+step4 = Step4.new
+step5 = Step5.new
+
+# Create a parallel workflow (STEP 2 x STEP 3)
 parallel_workflow = MARS::Workflows::Parallel.new(
   "Parallel workflow",
-  steps: [llm2, llm3]
+  steps: [step2, step3]
 )
 
 # Create a sequential workflow (Parallel workflow -> LLM 4)
 sequential_workflow = MARS::Workflows::Sequential.new(
   "Sequential workflow",
-  steps: [llm4, parallel_workflow]
+  steps: [step4, parallel_workflow]
 )
 
 # Create a parallel workflow (Sequential workflow x LLM 5)
 parallel_workflow2 = MARS::Workflows::Parallel.new(
   "Parallel workflow 2",
-  steps: [sequential_workflow, llm5]
+  steps: [sequential_workflow, step5]
 )
 
 # Create the gate that decides between exit or continue
 gate = MARS::Gate.new(
-  check: ->(input) { input[:result] },
+  check: ->(input) { nil if input == ["start", "step1", "formatted"] },
   fallbacks: {
     warning: sequential_workflow,
     error: parallel_workflow
@@ -56,8 +97,10 @@ gate = MARS::Gate.new(
 # Create the main workflow: LLM 1 -> Gate
 main_workflow = MARS::Workflows::Sequential.new(
   "Main Pipeline",
-  steps: [llm1, gate, parallel_workflow2]
+  steps: [step1, gate, parallel_workflow2]
 )
+
+main_workflow.run(["start"])
 
 # Generate and save the diagram
 diagram = MARS::Rendering::Mermaid.new(main_workflow).render
