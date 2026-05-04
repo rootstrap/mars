@@ -87,7 +87,7 @@ parallel_workflow2 = MARS::Workflows::Parallel.new(
 
 # Create the gate that decides between exit or continue
 gate = MARS::Gate.new(
-  check: ->(input) { nil if input == ["start", "step1", "formatted"] },
+  check: ->(input) { :default if input == ["start", "step1", "formatted"] },
   fallbacks: {
     warning: sequential_workflow,
     error: parallel_workflow

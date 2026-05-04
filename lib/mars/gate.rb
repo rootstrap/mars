@@ -30,7 +30,7 @@ module MARS
       input = context.current_input
       result = check.call(input)
 
-      return input unless result
+      return input if result.nil? || result == :default
 
       branch = fallbacks[result]
       raise ArgumentError, "No fallback registered for #{result.inspect}" unless branch
