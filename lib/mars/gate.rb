@@ -27,10 +27,9 @@ module MARS
 
     def run(context)
       context = ensure_context(context)
-      input = context.current_input
-      result = check.call(input)
+      result = check.call(context)
 
-      return input if result.nil? || result == :default
+      return context if result.nil? || result == :default
 
       branch = fallbacks[result]
       raise ArgumentError, "No fallback registered for #{result.inspect}" unless branch

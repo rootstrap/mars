@@ -22,17 +22,17 @@ RSpec.describe MARS::Gate do
       it "passes through when check returns falsy" do
         gate = described_class.new(
           "PassGate",
-          check: ->(_input) {},
+          check: ->(_context) {},
           fallbacks: { fail: fallback_step }
         )
 
-        expect(gate.run("hello")).to eq("hello")
+        expect(gate.run("hello").current_input).to eq("hello")
       end
 
       it "returns the fallback branch result when check returns a registered key" do
         gate = described_class.new(
           "FailGate",
-          check: ->(_input) { :fail },
+          check: ->(_context) { :fail },
           fallbacks: { fail: fallback_step }
         )
 
@@ -43,7 +43,7 @@ RSpec.describe MARS::Gate do
       it "raises when check returns an unregistered key" do
         gate = described_class.new(
           "BadGate",
-          check: ->(_input) { :unknown },
+          check: ->(_context) { :unknown },
           fallbacks: { fail: fallback_step }
         )
 
@@ -53,7 +53,7 @@ RSpec.describe MARS::Gate do
       it "selects among multiple fallbacks" do
         gate = described_class.new(
           "MultiFallback",
-          check: ->(input) { input[:error_type] },
+          check: ->(context) { context.current_input[:error_type] },
           fallbacks: { timeout: fallback_step, auth: error_step }
         )
 
@@ -75,12 +75,12 @@ RSpec.describe MARS::Gate do
       it "uses check and fallback DSL" do
         cls = fallback_cls
         gate_class = Class.new(described_class) do
-          check { |input| :invalid if input.length > 5 }
+          check { |context| :invalid if context.current_input.length > 5 }
           fallback :invalid, cls
         end
 
         gate = gate_class.new("DSLGate")
-        expect(gate.run("hi")).to eq("hi")
+        expect(gate.run("hi").current_input).to eq("hi")
         expect(gate.run("longstring")).to eq("handled: longstring")
       end
     end
