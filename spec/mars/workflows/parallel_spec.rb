@@ -174,20 +174,20 @@ RSpec.describe MARS::Workflows::Parallel do
 
     context "when steps are parallel workflows" do
       let(:flatten_sum_aggregator) do
-        MARS::Aggregator.new("Sum Aggregator", operation: lambda { |inputs| inputs.flatten.sum })
+        MARS::Aggregator.new("Sum Aggregator", operation: ->(inputs) { inputs.flatten.sum })
       end
 
       it "executes nested parallel workflows correctly" do
         add_five = add_step_class.new(5, name: "add_five")
         multiply_three = multiply_step_class.new(3, name: "multiply_three")
-        inner_workflow_1 = described_class.new("inner_workflow_1", steps: [add_five, multiply_three])
+        inner_workflow1 = described_class.new("inner_workflow_1", steps: [add_five, multiply_three])
 
         add_two = add_step_class.new(2, name: "add_two")
         multiply_four = multiply_step_class.new(4, name: "multiply_four")
-        inner_workflow_2 = described_class.new("inner_workflow_2", steps: [add_two, multiply_four])
+        inner_workflow2 = described_class.new("inner_workflow_2", steps: [add_two, multiply_four])
         outer_workflow = described_class.new(
           "outer_workflow",
-          steps: [inner_workflow_1, inner_workflow_2],
+          steps: [inner_workflow1, inner_workflow2],
           aggregator: flatten_sum_aggregator
         )
 
