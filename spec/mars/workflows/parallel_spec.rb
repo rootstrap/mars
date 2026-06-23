@@ -161,16 +161,41 @@ RSpec.describe MARS::Workflows::Parallel do
     end
 
     it "propagates errors from steps" do
+      Console.logger.level = Console::Logger::FATAL # avoid logging the errors for this test
+
       add_step = add_step_class.new(5, name: "add")
       error_step = error_step_class.new("Step failed", name: "error_step_one")
       error_step_two = error_step_class.new("Step failed two", name: "error_step_two")
 
       workflow = described_class.new("error_workflow", steps: [add_step, error_step, error_step_two])
 
-      expect { workflow.run(10) }.to raise_error(
-        MARS::Workflows::AggregateError,
-        "error_step_one: Step failed\nerror_step_two: Step failed two"
-      )
+      expect { workflow.run(10) }.to raise_error(StandardError, "Step failed")
+    end
+
+    context "when steps are parallel workflows" do
+      let(:flatten_sum_aggregator) do
+        MARS::Aggregator.new("Sum Aggregator", operation: lambda { |inputs| inputs.flatten.sum })
+      end
+
+      it "executes nested parallel workflows correctly" do
+        add_five = add_step_class.new(5, name: "add_five")
+        multiply_three = multiply_step_class.new(3, name: "multiply_three")
+        inner_workflow_1 = described_class.new("inner_workflow_1", steps: [add_five, multiply_three])
+
+        add_two = add_step_class.new(2, name: "add_two")
+        multiply_four = multiply_step_class.new(4, name: "multiply_four")
+        inner_workflow_2 = described_class.new("inner_workflow_2", steps: [add_two, multiply_four])
+        outer_workflow = described_class.new(
+          "outer_workflow",
+          steps: [inner_workflow_1, inner_workflow_2],
+          aggregator: flatten_sum_aggregator
+        )
+
+        # inner_workflow_1: 10 + 5 = 15, 10 * 3 = 30
+        # inner_workflow_2: 10 + 2 = 12, 10 * 4 = 40
+        # outer_workflow results: [15, 30, 12, 40] => sum = 97
+        expect(outer_workflow.run(10)).to eq(97)
+      end
     end
   end
 

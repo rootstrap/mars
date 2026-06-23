@@ -25,7 +25,7 @@ module MARS
       attr_reader :steps, :aggregator
 
       def execute_steps(context, child_contexts)
-        Async do |workflow|
+        Sync do |workflow|
           tasks = steps.map do |step|
             child_ctx = context.fork(state: step.state)
             child_contexts << child_ctx
@@ -36,7 +36,7 @@ module MARS
           end
 
           tasks.map(&:wait)
-        end.result
+        end
       end
 
       def workflow_step(step, child_ctx)
