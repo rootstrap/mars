@@ -12,11 +12,8 @@ module MARS
 
       def run(context)
         context = ensure_context(context)
-        errors = []
         child_contexts = []
-        results = execute_steps(context, errors, child_contexts)
-
-        raise AggregateError, errors if errors.any?
+        results = execute_steps(context, child_contexts)
 
         context.merge(child_contexts)
         context.current_input = results
@@ -27,21 +24,19 @@ module MARS
 
       attr_reader :steps, :aggregator
 
-      def execute_steps(context, errors, child_contexts)
-        Async do |workflow|
+      def execute_steps(context, child_contexts)
+        Sync do |workflow|
           tasks = steps.map do |step|
             child_ctx = context.fork(state: step.state)
             child_contexts << child_ctx
 
             workflow.async do
               workflow_step(step, child_ctx)
-            rescue StandardError => e
-              errors << { error: e, step_name: step.name }
             end
           end
 
           tasks.map(&:wait)
-        end.result
+        end
       end
 
       def workflow_step(step, child_ctx)
